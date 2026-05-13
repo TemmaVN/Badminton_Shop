@@ -15,8 +15,10 @@ function App() {
         <PageHeader setIsMenuOpen={setIsMenuOpen} />
         {isHideMainHeader && <MainHeader />}
         <MenuHeader isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
-        <Routes>
+         <Routes>
           <Route path='/' element={<Advertisement />} />
+          <Route path='/login' element={<Login />} />
+          <Route path='/register' element={<Register />} />
         </Routes>
       </div>
     </BrowserRouter>
