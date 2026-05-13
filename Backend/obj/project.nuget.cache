@@ -1,8 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "fPp8EJ63g5U=",
+  "dgSpecHash": "G857qzjW+5Q=",
   "success": true,
   "projectFilePath": "/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/Backend.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "/home/temma/.nuget/packages/microsoft.aspnetcore.openapi/9.0.15/microsoft.aspnetcore.openapi.9.0.15.nupkg.sha512",
+    "/home/temma/.nuget/packages/microsoft.openapi/1.6.17/microsoft.openapi.1.6.17.nupkg.sha512",
+    "/home/temma/.nuget/packages/microsoft.netcore.app.host.linux-x64/9.0.15/microsoft.netcore.app.host.linux-x64.9.0.15.nupkg.sha512"
+  ],
   "logs": []
 }
