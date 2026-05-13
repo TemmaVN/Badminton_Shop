@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Racket from './miniproduct/Racket';
 
 const MainHeader = () => {
   const [isProductHovered, setIsProductHovered] = useState(false);
@@ -112,6 +111,24 @@ const racketBagProducts = [
     <nav className="relative bg-white  text-gray-700 font-sans flex justify-center"
     onMouseLeave={() => setIsProductHovered(false)}
     >
+      {isProductHovered && currentProduct.length > 0 && (
+        <div className="absolute top-full left-0 w-full z-50 flex justify-center bg-white shadow-lg border-t border-gray-200">
+          <div className="container max-w-325 px-6 py-6 grid grid-cols-4 gap-6">
+            {currentProduct.map((group, i) => (
+              <div key={i}>
+                <p className="font-bold text-orange-500 text-sm mb-2">{group.brand}</p>
+                <ul className="space-y-1">
+                  {group.items.map((item, j) => (
+                    <li key={j}>
+                      <a href="#" className="text-sm text-gray-600 hover:text-orange-500">{item}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="container shadow-md border-x border-t border-gray-200 flex grow max-w-[1300px] items-center justify-center">
         {/* Main Links */}
         <div className="flex space-x-15 uppercase text-sm font-bold py-4">
@@ -168,9 +185,6 @@ const racketBagProducts = [
 
         </div>
       </div>
-      {isProductHovered && (
-        <Racket productCategories={currentProduct}/>
-      )}
     </nav>
   );
 };
