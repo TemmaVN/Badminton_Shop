@@ -80,11 +80,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/Backend.csproj",
+      "projectUniqueName": "/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/Backend/Backend.csproj",
       "projectName": "Backend",
-      "projectPath": "/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/Backend.csproj",
+      "projectPath": "/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/Backend/Backend.csproj",
       "packagesPath": "/home/temma/.nuget/packages/",
-      "outputPath": "/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/obj/",
+      "outputPath": "/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/Backend/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/temma/.nuget/NuGet/NuGet.Config"
