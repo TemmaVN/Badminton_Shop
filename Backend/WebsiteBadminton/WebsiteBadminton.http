@@ -1,0 +1,6 @@
+@WebsiteBadminton_HostAddress = http://localhost:5106
+
+GET {{WebsiteBadminton_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
