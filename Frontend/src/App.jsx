@@ -1,17 +1,26 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState } from 'react'
+import PageHeader from './layouts/PageHeader'
+import MainHeader from './layouts/MainHeader'
+import MenuHeader from './layouts/MenuHeader'
+import { useMediaQuery } from './mystate/useMediaQuery'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import Advertisement from './components/Advertisement'
 
 function App() {
-  const [count, setCount] = useState(0)
-
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
   return (
-    <div>
-      App
-    </div>
+    <BrowserRouter>
+      <div className='bg-white relative h-auto w-full'>
+        <PageHeader setIsMenuOpen={setIsMenuOpen} />
+        {isHideMainHeader && <MainHeader />}
+        <MenuHeader isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
+        <Routes>
+          <Route path='/' element={<Advertisement />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   )
 }
 
-export default App
+export default App;
