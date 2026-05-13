@@ -1,0 +1,12 @@
+/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/BadmintonShop.Core/bin/Debug/net8.0/BadmintonShop.Core.deps.json
+/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/BadmintonShop.Core/bin/Debug/net8.0/BadmintonShop.Core.dll
+/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/BadmintonShop.Core/bin/Debug/net8.0/BadmintonShop.Core.pdb
+/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/BadmintonShop.Core/obj/Debug/net8.0/BadmintonShop.Core.GeneratedMSBuildEditorConfig.editorconfig
+/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/BadmintonShop.Core/obj/Debug/net8.0/BadmintonShop.Core.AssemblyInfoInputs.cache
+/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/BadmintonShop.Core/obj/Debug/net8.0/BadmintonShop.Core.AssemblyInfo.cs
+/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/BadmintonShop.Core/obj/Debug/net8.0/BadmintonShop.Core.csproj.CoreCompileInputs.cache
+/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/BadmintonShop.Core/obj/Debug/net8.0/BadmintonShop.Core.sourcelink.json
+/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/BadmintonShop.Core/obj/Debug/net8.0/BadmintonShop.Core.dll
+/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/BadmintonShop.Core/obj/Debug/net8.0/refint/BadmintonShop.Core.dll
+/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/BadmintonShop.Core/obj/Debug/net8.0/BadmintonShop.Core.pdb
+/home/temma/Documents/Learning/y2_hk2/BadmintonShop/Backend/BadmintonShop.Core/obj/Debug/net8.0/ref/BadmintonShop.Core.dll
