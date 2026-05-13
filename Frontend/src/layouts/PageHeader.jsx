@@ -7,7 +7,7 @@ const PageHeader = () => {
   const [isFocus, setIsFocus] = useState(false);
   const [showFullWidthSearch, setShowFullWidthSearch] = useState(false);
   const isPageMedium = useMediaQuery('(min-width: 768px)');
-  const isChangeFindButton = useMediaQuery('(min-width: 1500)');
+  const isChangeFindButton = useMediaQuery('(min-width: 1500px)');
   const isShowFullWidthSearch = !isPageMedium && showFullWidthSearch;
   const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
   return (
