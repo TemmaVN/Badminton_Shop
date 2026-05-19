@@ -2,9 +2,9 @@ import React, { useState } from 'react'
 import PageHeader from './layouts/PageHeader'
 import MainHeader from './layouts/MainHeader'
 import MenuHeader from './layouts/MenuHeader'
+import HomePage from './layouts/HomePage'
 import { useMediaQuery } from './mystate/useMediaQuery'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import Advertisement from './components/Advertisement'
 
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,7 +16,7 @@ function App() {
         {isHideMainHeader && <MainHeader />}
         <MenuHeader isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
         <Routes>
-          <Route path='/' element={<Advertisement />} />
+          <Route path='/' element={<HomePage />} />
         </Routes>
       </div>
     </BrowserRouter>
