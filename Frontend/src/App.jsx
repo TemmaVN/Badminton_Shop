@@ -1,8 +1,10 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import PageHeader from './layouts/PageHeader'
 import MainHeader from './layouts/MainHeader'
 import MenuHeader from './layouts/MenuHeader'
 import HomePage from './layouts/HomePage'
+import Product from './layouts/Product'
+import ProductDetail from './layouts/ProductDetail'
 import { useMediaQuery } from './mystate/useMediaQuery'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
@@ -17,6 +19,8 @@ function App() {
         <MenuHeader isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
         <Routes>
           <Route path='/' element={<HomePage />} />
+          <Route path='/:categorySlug/*' element={<Product />} />
+          <Route path='/p/:productSlug' element={<ProductDetail />} />
         </Routes>
       </div>
     </BrowserRouter>
