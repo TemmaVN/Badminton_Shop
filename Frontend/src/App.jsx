@@ -3,6 +3,8 @@ import PageHeader from './layouts/PageHeader'
 import MainHeader from './layouts/MainHeader'
 import MenuHeader from './layouts/MenuHeader'
 import HomePage from './layouts/HomePage'
+import Login from './layouts/Login'
+import Register from './layouts/Register'
 import Product from './layouts/Product'
 import ProductDetail from './layouts/ProductDetail'
 import { useMediaQuery } from './mystate/useMediaQuery'
@@ -18,9 +20,11 @@ function App() {
         {isHideMainHeader && <MainHeader />}
         <MenuHeader isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
          <Routes>
-          <Route path='/' element={<Advertisement />} />
+          <Route path='/' element={<HomePage />} />
           <Route path='/login' element={<Login />} />
           <Route path='/register' element={<Register />} />
+          <Route path='/:categorySlug/*' element={<Product/>}/>
+          <Route path='/p/:productSlug' element={<ProductDetail/>} />
         </Routes>
       </div>
     </BrowserRouter>
