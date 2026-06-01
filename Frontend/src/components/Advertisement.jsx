@@ -49,7 +49,7 @@ const Advertisement = () => {
         <div className='absolute bottom-4 left-0 w-full flex justify-center gap-3 z-20'>
           {
             linkAdvertisement.map((items,index) => (
-              <div key={index} className={`w-3 h-3 ${index === countAd ? 'bg-blue-400': 'bg-white'} rounded-full`}></div>
+              <div key={index} className={`w-3 h-3 ${index == (countAd % length)? 'bg-blue-400': 'bg-white'} rounded-full`}></div>
             ))
           }
         </div>
