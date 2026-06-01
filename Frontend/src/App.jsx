@@ -1,30 +1,30 @@
-import { useState } from 'react'
 import PageHeader from './layouts/PageHeader'
 import MainHeader from './layouts/MainHeader'
-import MenuHeader from './layouts/MenuHeader'
-import HomePage from './layouts/HomePage'
-import Login from './layouts/Login'
-import Register from './layouts/Register'
-import Product from './layouts/Product'
-import ProductDetail from './layouts/ProductDetail'
-import { useMediaQuery } from './mystate/useMediaQuery'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import {useMediaQuery} from './mystate/useMediaQuery'
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import Advertisement from './components/Advertisement';
+import Login from './layouts/Login';
+import Register from './layouts/Register';
+import Dashboard from './components/admin/Dashboard';
+import Statistics from './components/admin/Statistics';
+import UserList from './components/admin/UserList';
+import AdminInfo from './components/admin/AdminInfo';
 
 function App() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
   return (
     <BrowserRouter>
       <div className='bg-white relative h-auto w-full'>
-        <PageHeader setIsMenuOpen={setIsMenuOpen} />
+        <PageHeader/>
         {isHideMainHeader && <MainHeader />}
-        <MenuHeader isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
-         <Routes>
-          <Route path='/' element={<HomePage />} />
+        <Routes>
+          <Route path='/' element={<Advertisement />} />
           <Route path='/login' element={<Login />} />
           <Route path='/register' element={<Register />} />
-          <Route path='/:categorySlug/*' element={<Product/>}/>
-          <Route path='/p/:productSlug' element={<ProductDetail/>} />
+          <Route path='/dashboard' element={<Dashboard />} />
+          <Route path='/statistics' element={<Statistics />} />
+          <Route path='/users' element={<UserList />} />
+          <Route path='/admin-info' element={<AdminInfo />} />
         </Routes>
       </div>
     </BrowserRouter>

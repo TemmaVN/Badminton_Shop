@@ -3,7 +3,7 @@ import { ArrowLeft, Heart, Menu, Search, ShoppingCart, User, User2 } from 'lucid
 import Button from '../components/Button'
 import {useMediaQuery} from '../mystate/useMediaQuery'
 
-const PageHeader = ({ setIsMenuOpen }) => {
+const PageHeader = () => {
   const [isFocus, setIsFocus] = useState(false);
   const [showFullWidthSearch, setShowFullWidthSearch] = useState(false);
   const isPageMedium = useMediaQuery('(min-width: 768px)');
@@ -12,7 +12,7 @@ const PageHeader = ({ setIsMenuOpen }) => {
   const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
   return (
     <div className='flex gap-10 justify-center lg:gap-20 pt-4  mb-6 mx-4'>
-        {!isHideMainHeader && <Button size='icon' onClick={() => setIsMenuOpen(true)}><Menu/></Button>}
+        {!isHideMainHeader && <Button size='icon'><Menu/></Button>}
         {!isShowFullWidthSearch && 
         <div>
           <a href="">
