@@ -3,7 +3,7 @@ import { ArrowLeft, Heart, Menu, Search, ShoppingCart, User, User2 } from 'lucid
 import Button from '../components/Button'
 import {useMediaQuery} from '../mystate/useMediaQuery'
 
-const PageHeader = () => {
+const PageHeader = ({ setIsMenuOpen, setIsCartOpen}) => {
   const [isFocus, setIsFocus] = useState(false);
   const [showFullWidthSearch, setShowFullWidthSearch] = useState(false);
   const isPageMedium = useMediaQuery('(min-width: 768px)');
@@ -12,7 +12,7 @@ const PageHeader = () => {
   const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
   return (
     <div className='flex gap-10 justify-center lg:gap-20 pt-4  mb-6 mx-4'>
-        {!isHideMainHeader && <Button size='icon'><Menu/></Button>}
+        {!isHideMainHeader && <Button size='icon' onClick={() => setIsMenuOpen(true)}><Menu/></Button>}
         {!isShowFullWidthSearch && 
         <div>
           <a href="">
@@ -48,8 +48,13 @@ const PageHeader = () => {
                     <Button size='icon'>
             <User2/>
           </Button>
-                    <Button size='icon'>
+                    <Button size='icon'
+                    onClick={() => setIsCartOpen(true)} 
+                    className="relative">
             <ShoppingCart />
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                3
+              </span>
           </Button>
         </div>}
     </div>
