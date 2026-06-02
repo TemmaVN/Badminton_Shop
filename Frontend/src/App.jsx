@@ -1,17 +1,34 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import PageHeader from './layouts/PageHeader'
+import MainHeader from './layouts/MainHeader'
+import {useMediaQuery} from './mystate/useMediaQuery'
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import Advertisement from './components/Advertisement';
+import Login from './layouts/Login';
+import Register from './layouts/Register';
+import Dashboard from './components/admin/Dashboard';
+import Statistics from './components/admin/Statistics';
+import UserList from './components/admin/UserList';
+import AdminInfo from './components/admin/AdminInfo';
 
 function App() {
-  const [count, setCount] = useState(0)
-
+  const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
   return (
-    <div>
-      App
-    </div>
+    <BrowserRouter>
+      <div className='bg-white relative h-auto w-full'>
+        <PageHeader/>
+        {isHideMainHeader && <MainHeader />}
+        <Routes>
+          <Route path='/' element={<Advertisement />} />
+          <Route path='/login' element={<Login />} />
+          <Route path='/register' element={<Register />} />
+          <Route path='/dashboard' element={<Dashboard />} />
+          <Route path='/statistics' element={<Statistics />} />
+          <Route path='/users' element={<UserList />} />
+          <Route path='/admin-info' element={<AdminInfo />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   )
 }
 
-export default App
+export default App;
