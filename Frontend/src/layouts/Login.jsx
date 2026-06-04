@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import FlashButton from '../components/FlashButton';
 import { useMediaQuery } from '../mystate/useMediaQuery';
 
@@ -8,29 +8,18 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     setTimeout(() => {
       setLoading(false);
-      setSuccess(true);
-      alert(`Đăng nhập thành công với email: ${email}`);
+      localStorage.setItem('user', JSON.stringify({ fullName: email.split('@')[0], email }));
+      navigate('/admin/dashboard');
     }, 1000);
   };
-
-  if (success) {
-    return (
-      <div className='flex w-full h-auto text-black justify-center items-center min-h-screen'>
-        <div className='text-center'>
-          <div className='text-green-500 text-2xl mb-4'>✅ Đăng nhập thành công!</div>
-          <Link to="/" className='text-orange-default hover:text-orange-900'>Về trang chủ</Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className='flex w-full h-auto text-black'>

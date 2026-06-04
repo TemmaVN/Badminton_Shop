@@ -76,7 +76,7 @@ const Product = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [inputKeyword, setInputKeyword] = useState(""); // chỉ dùng cho UI input
 
-  const { categorySlug, "*": brandSlug } = useParams();
+  const { categorySlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -119,7 +119,6 @@ const Product = () => {
       try {
         let filtered = [...MOCK_PRODUCTS];
         if (!isSearchRoute && categorySlug) filtered = filtered.filter(p => p.categorySlug === categorySlug);
-        if (brandSlug) filtered = filtered.filter(p => p.brandSlug === brandSlug);
         if (keyword) {
           const kw = keyword.toLowerCase();
           filtered = filtered.filter(p => p.productName.toLowerCase().includes(kw));
@@ -148,7 +147,7 @@ const Product = () => {
       }
     }, 200);
     return () => clearTimeout(timer);
-  }, [searchParams, categorySlug, brandSlug]);
+  }, [searchParams, categorySlug]);
 
   // ── Helper: cập nhật URL ──────────────────────────────────
   const updateParams = (overrides = {}) => {

@@ -9,7 +9,7 @@ const MOCK_PRODUCT_DETAILS = {
   "yonex-astrox-88d-pro": {
     productName: "Vợt Cầu Lông Yonex Astrox 88D Pro",
     image: "https://picsum.photos/seed/racket1/400/400",
-    imgaes: [
+    images: [
       { imageID: 1, displayOrder: 1, imageUrl: "https://picsum.photos/seed/racket1/400/400" },
       { imageID: 2, displayOrder: 2, imageUrl: "https://picsum.photos/seed/racket1b/400/400" },
       { imageID: 3, displayOrder: 3, imageUrl: "https://picsum.photos/seed/racket1c/400/400" },
@@ -24,7 +24,7 @@ const MOCK_PRODUCT_DETAILS = {
   "yonex-nanoflare-800": {
     productName: "Vợt Cầu Lông Yonex Nanoflare 800",
     image: "https://picsum.photos/seed/racket4/400/400",
-    imgaes: [
+    images: [
       { imageID: 1, displayOrder: 1, imageUrl: "https://picsum.photos/seed/racket4/400/400" },
       { imageID: 2, displayOrder: 2, imageUrl: "https://picsum.photos/seed/racket4b/400/400" },
     ],
@@ -37,7 +37,7 @@ const MOCK_PRODUCT_DETAILS = {
   "victor-thruster-k-9900": {
     productName: "Vợt Cầu Lông Victor Thruster K 9900",
     image: "https://picsum.photos/seed/racket2/400/400",
-    imgaes: [
+    images: [
       { imageID: 1, displayOrder: 1, imageUrl: "https://picsum.photos/seed/racket2/400/400" },
       { imageID: 2, displayOrder: 2, imageUrl: "https://picsum.photos/seed/racket2b/400/400" },
     ],
@@ -49,7 +49,7 @@ const MOCK_PRODUCT_DETAILS = {
   "lining-turbo-charging-20": {
     productName: "Vợt Cầu Lông Li-Ning Turbo Charging 20",
     image: "https://picsum.photos/seed/racket3/400/400",
-    imgaes: [
+    images: [
       { imageID: 1, displayOrder: 1, imageUrl: "https://picsum.photos/seed/racket3/400/400" },
       { imageID: 2, displayOrder: 2, imageUrl: "https://picsum.photos/seed/racket3b/400/400" },
     ],
@@ -61,7 +61,7 @@ const MOCK_PRODUCT_DETAILS = {
   "yonex-astrox-100zz": {
     productName: "Vợt Cầu Lông Yonex Astrox 100ZZ",
     image: "https://picsum.photos/seed/racket7/400/400",
-    imgaes: [
+    images: [
       { imageID: 1, displayOrder: 1, imageUrl: "https://picsum.photos/seed/racket7/400/400" },
       { imageID: 2, displayOrder: 2, imageUrl: "https://picsum.photos/seed/racket7b/400/400" },
     ],
@@ -74,7 +74,7 @@ const MOCK_PRODUCT_DETAILS = {
   "yonex-power-cushion-65z3": {
     productName: "Giày Cầu Lông Yonex Power Cushion 65Z3",
     image: "https://picsum.photos/seed/shoe1/400/400",
-    imgaes: [
+    images: [
       { imageID: 1, displayOrder: 1, imageUrl: "https://picsum.photos/seed/shoe1/400/400" },
       { imageID: 2, displayOrder: 2, imageUrl: "https://picsum.photos/seed/shoe1b/400/400" },
     ],
@@ -88,7 +88,7 @@ const MOCK_PRODUCT_DETAILS = {
   "victor-sh-a960": {
     productName: "Giày Cầu Lông Victor SH-A960",
     image: "https://picsum.photos/seed/shoe6/400/400",
-    imgaes: [
+    images: [
       { imageID: 1, displayOrder: 1, imageUrl: "https://picsum.photos/seed/shoe6/400/400" },
       { imageID: 2, displayOrder: 2, imageUrl: "https://picsum.photos/seed/shoe6b/400/400" },
     ],
@@ -101,7 +101,7 @@ const MOCK_PRODUCT_DETAILS = {
   "yonex-ba92426-12in1": {
     productName: "Balo Cầu Lông Yonex BA92426 12 in 1",
     image: "https://picsum.photos/seed/bag5/400/400",
-    imgaes: [
+    images: [
       { imageID: 1, displayOrder: 1, imageUrl: "https://picsum.photos/seed/bag5/400/400" },
       { imageID: 2, displayOrder: 2, imageUrl: "https://picsum.photos/seed/bag5b/400/400" },
     ],
@@ -250,7 +250,6 @@ const handleOrder = () => {
   });
 };
 
-console.log(product)
   if (loading) return <div className="text-center py-20">Đang tải sản phẩm...</div>;
   if (!product) return <div className="text-center py-20">Không tìm thấy sản phẩm</div>;
   return (
@@ -261,9 +260,9 @@ console.log(product)
         {/* TOP SECTION: PRODUCT INFO */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-16">
           {/* Left: Images */}
-          <div className='flex flex-col h-200'>
+          <div className='flex flex-col h-125'>
             <div className='flex-1 min-h-0 flex items-center justify-center p-4'>
-              {product.imgaes
+              {product.images
                 .filter(img => img.displayOrder === selectedImageOrder)
                 .map(img => {
                 return (
@@ -274,7 +273,7 @@ console.log(product)
               })} 
             </div>         
             <div className='flex justify-center gap-3'>
-              {product.imgaes.map(img => {
+              {product.images.map(img => {
               return (
                   <div className="flex gap-3 overflow-x-auto" onMouseEnter={() => setSelectedImageOrder(img.displayOrder)}>
                     <img src={img.imageUrl} className="w-20 h-20 border rounded-lg p-1 shrink-0 cursor-pointer hover:border-orange-500" />
@@ -480,14 +479,14 @@ console.log(product)
           </div>
 
           <button
-            onClick={() => setActiveTab(false)}
+            onClick={() => setActiveTab('description')}
             className="mt-10 mx-auto block text-orange-500 font-bold border-b border-orange-500 hover:text-orange-700 transition-colors">
             Thu gọn
           </button>
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
