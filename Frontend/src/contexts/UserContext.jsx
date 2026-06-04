@@ -1,66 +1,90 @@
-// src/contexts/UserContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { userApi } from '../api';
-import { useAuth } from './AuthContext';
+import { createContext, useContext, useState, useEffect } from "react";
+import { userApi } from "../api";
 
 const UserContext = createContext(null);
 
 export const useUser = () => {
-  const ctx = useContext(UserContext);
-  if (!ctx) throw new Error('useUser must be used within UserProvider');
-  return ctx;
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error("useUser must be used within a UserProvider");
+  }
+  return context;
 };
-
 export const UserProvider = ({ children }) => {
-  const { isAuthenticated } = useAuth();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
+  }, []);
+
+  const changePassword = async (oldPassword, newPassword) => {
+    try {
+      const response = await userApi.changePassword({
+        oldPassword,
+        newPassword,
+      });
+      return {
+        success: true,
+        message: response.data?.message || "Password changed successfully",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to change password",
+      };
+    }
+  };
+  const updateProfile = async (
+    fullName,
+    dateOfBirth,
+    phoneNumber,
+    city,
+    district,
+    detailedAddress,
+  ) => {
+    try {
+      const response = await userApi.UpdateProfile({
+        fullName,
+        dateOfBirth,
+        phoneNumber,
+        city,
+        district,
+        detailedAddress,
+      });
+      return {
+        success: true,
+        message: response.data?.message || "Profile updated successfully",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to update profile",
+      };
+    }
+  };
   const getUserInfo = async () => {
-    if (!isAuthenticated) return null;
     setLoading(true);
     try {
-      const response = await userApi.getInfo();
+      const response = await userApi.get_info();
       setUser(response.data);
-      localStorage.setItem('user', JSON.stringify(response.data));
-      return response.data;
+      localStorage.setItem("user", JSON.stringify(response.data));
     } catch (error) {
-      console.error('Get user info failed:', error);
-      return null;
+      console.error("Failed to get user info:", error);
     } finally {
       setLoading(false);
     }
   };
-
-  const updateProfile = async (data) => {
-    try {
-      await userApi.updateProfile(data);
-      await getUserInfo(); // reload
-      return { success: true };
-    } catch (error) {
-      const message = error.response?.data?.message || 'Cập nhật thất bại';
-      return { success: false, message };
-    }
+  const value = {
+    user,
+    changePassword,
+    updateProfile,
+    getUserInfo,
+    loading,
   };
-
-  const changePassword = async (oldPassword, newPassword) => {
-    try {
-      await userApi.changePassword(oldPassword, newPassword);
-      return { success: true };
-    } catch (error) {
-      const message = error.response?.data?.message || 'Đổi mật khẩu thất bại';
-      return { success: false, message };
-    }
-  };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      getUserInfo();
-    } else {
-      setUser(null);
-    }
-  }, [isAuthenticated]);
-
-  const value = { user, getUserInfo, updateProfile, changePassword, loading };
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
