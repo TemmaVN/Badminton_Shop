@@ -1,89 +1,66 @@
-/* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { userApi } from "../api";
+// src/contexts/UserContext.jsx
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { userApi } from '../api';
+import { useAuth } from './AuthContext';
 
 const UserContext = createContext(null);
 
 export const useUser = () => {
-  const context = useContext(UserContext);
-  if (!context) {
-    throw new Error("useUser must be used within a UserProvider");
-  }
-  return context;
+  const ctx = useContext(UserContext);
+  if (!ctx) throw new Error('useUser must be used within UserProvider');
+  return ctx;
 };
 
 export const UserProvider = ({ children }) => {
+  const { isAuthenticated } = useAuth();
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check for stored user on mount
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
-  }, []);
-
-  const changePassword = async ({ oldPassword, newPassword }) => {
-    try {
-      await userApi.changePassword({ oldPassword, newPassword });
-      return { success: true };
-    } catch (error) {
-      const message = error.response?.data?.message || "Change password failed";
-      return { success: false, message };
-    }
-  };
-
-  const UpdateProfile = async ({
-    fullName,
-    dateOfBirth,
-    phoneNumber,
-    city,
-    district,
-    detailedAddress,
-  }) => {
-    try {
-      await userApi.UpdateProfile({
-        fullName,
-        dateOfBirth,
-        phoneNumber,
-        city,
-        district,
-        detailedAddress,
-      });
-      return { success: true };
-    } catch (error) {
-      const message =
-        error.response?.data?.message || "Cập nhật thông tin thất bại";
-      return { success: false, message };
-    }
-  };
+  const [loading, setLoading] = useState(false);
 
   const getUserInfo = async () => {
+    if (!isAuthenticated) return null;
     setLoading(true);
     try {
-      const response = await userApi.get_info();
+      const response = await userApi.getInfo();
       setUser(response.data);
-      localStorage.setItem("user", JSON.stringify(response.data));
-      return { success: true, user: response.data };
+      localStorage.setItem('user', JSON.stringify(response.data));
+      return response.data;
     } catch (error) {
-      const message = error.response?.data?.message || "Get user info failed";
-      return { success: false, message };
+      console.error('Get user info failed:', error);
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
-  const value = {
-    user,
-    UpdateProfile,
-    changePassword,
-    getUserInfo,
-    loading,
+  const updateProfile = async (data) => {
+    try {
+      await userApi.updateProfile(data);
+      await getUserInfo(); // reload
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Cập nhật thất bại';
+      return { success: false, message };
+    }
   };
 
+  const changePassword = async (oldPassword, newPassword) => {
+    try {
+      await userApi.changePassword(oldPassword, newPassword);
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Đổi mật khẩu thất bại';
+      return { success: false, message };
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      getUserInfo();
+    } else {
+      setUser(null);
+    }
+  }, [isAuthenticated]);
+
+  const value = { user, getUserInfo, updateProfile, changePassword, loading };
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
-
-export default UserContext;
