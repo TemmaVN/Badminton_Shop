@@ -3,8 +3,8 @@ import { User2, LockKeyhole, PackageMinus } from 'lucide-react';
 import Button from '../components/Button';
 import { useMediaQuery } from '../mystate/useMediaQuery';
 import Information from '../components/Information';
-import ChangePass from '../components/ChangePass';
-import MyOrders from '../components/MyOrders';
+import ChangePass from '../components/ChangePassword';
+import MyOrders from './MyOrder';
 import { useAuth } from '../contexts/AuthContext';
 
 const UserInfo = () => {

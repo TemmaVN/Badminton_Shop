@@ -48,7 +48,8 @@ export const userApi = {
 // ========== ORDER API ==========
 export const orderApi = {
   getMyOrders: () => api.get('/Order/my-orders'),
-  cancelOrder: (orderId) => api.put(`/Order/cancel/${orderId}`),
+  cancel: (orderId) => api.put(`/Order/cancel/${orderId}`),
+  create: (data) => api.post('/Order/create', data),
 };
 //Cart Api
 export const cartApi = {

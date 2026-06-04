@@ -1,21 +1,27 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Heart, Menu, Search, ShoppingCart, User, User2 } from 'lucide-react'
+import { ArrowLeft, Heart, Menu, Search, ShoppingCart, User2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import Button from '../components/Button'
-import {useMediaQuery} from '../mystate/useMediaQuery'
+import { useMediaQuery } from '../mystate/useMediaQuery'
+import { useCart } from '../contexts/CartContext'
+import { useAuth } from '../contexts/AuthContext'
 
 const PageHeader = ({ setIsMenuOpen, setIsCartOpen}) => {
   const [isFocus, setIsFocus] = useState(false);
   const [showFullWidthSearch, setShowFullWidthSearch] = useState(false);
   const isPageMedium = useMediaQuery('(min-width: 768px)');
-  const isChangeFindButton = useMediaQuery('(min-width: 1500px)');
   const isShowFullWidthSearch = !isPageMedium && showFullWidthSearch;
   const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
+  const { totalItems } = useCart();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <div className='flex gap-10 justify-center lg:gap-20 pt-4  mb-6 mx-4'>
         {!isHideMainHeader && <Button size='icon' onClick={() => setIsMenuOpen(true)}><Menu/></Button>}
-        {!isShowFullWidthSearch && 
+        {!isShowFullWidthSearch &&
         <div>
-          <a href="">
+          <a href="/">
             <img src="https://static.fbshop.vn/wp-content/uploads/2026/01/cropped-logo-4.webp" alt="" className='w-12 h-12'/>
           </a>
         </div>}
@@ -24,10 +30,10 @@ const PageHeader = ({ setIsMenuOpen, setIsCartOpen}) => {
             <ArrowLeft/>
           </Button>}
         <form action="" className={`bg-gray-bg rounded-[10px] grow max-w-[900px] items-center ${isShowFullWidthSearch? 'flex': 'md:flex hidden'} ${isFocus? 'border border-orange-default shadow-inner': ''}`}>
-          
+
           <Button variant='ghost' size='icon' className=''><Search/></Button>
-          <input 
-          type="search" 
+          <input
+          type="search"
           placeholder='Search...'
           className='py-1 px-4 text-lg outline-none text-gray-text flex-1'
           onFocus={() => setIsFocus(true)}
@@ -37,7 +43,7 @@ const PageHeader = ({ setIsMenuOpen, setIsCartOpen}) => {
             {!isShowFullWidthSearch? 'Tìm kiếm': <Search/>}
           </Button>
         </form>
-        {!isShowFullWidthSearch && 
+        {!isShowFullWidthSearch &&
         <div className='flex'>
           <Button size='icon' className='md:hidden' onClick={() => {setShowFullWidthSearch(true)}}>
             <Search/>
@@ -45,16 +51,18 @@ const PageHeader = ({ setIsMenuOpen, setIsCartOpen}) => {
           <Button size='icon'>
             <Heart/>
           </Button>
-                    <Button size='icon'>
+          <Button size='icon' onClick={() => navigate(isAuthenticated ? '/user-info' : '/login')}>
             <User2/>
           </Button>
-                    <Button size='icon'
-                    onClick={() => setIsCartOpen(true)} 
+          <Button size='icon'
+                    onClick={() => setIsCartOpen(true)}
                     className="relative">
             <ShoppingCart />
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
-                3
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                {totalItems > 99 ? '99+' : totalItems}
               </span>
+            )}
           </Button>
         </div>}
     </div>
