@@ -152,5 +152,17 @@ export const orderApi = {
   adminSearch: (params = {}) => api.get("/Order/admin-search", { params }),
   preview: (data) => api.post("/Order/preview", data),
 };
+export const voucherApi = {
+  // POST - returns vouchers applicable to a specific cart/checkout (requires auth)
+  getAvailableVouchers: (data) => api.post("/Voucher/my-voucher", data ?? {}),
+  // GET - returns all public available vouchers
+  getAllAvailable: () => api.get("/Voucher/all-available"),
+  saveVoucher: (voucherId) => api.post(`/Voucher/save/${voucherId}`),
+  adminCreate: (data) => api.post("/Voucher/admin/add", data),
+  adminGet: (page = 1, pageSize = 10) =>
+    api.get("/Voucher/admin", { params: { page, pageSize } }),
+  adminSetVoucherActive: (voucherId, isActive) =>
+    api.put(`/Voucher/admin/${voucherId}/active`, { isActive }, data),
+};
 
 export default api;
