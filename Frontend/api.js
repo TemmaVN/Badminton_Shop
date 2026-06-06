@@ -132,4 +132,25 @@ export const cartApi = {
     api.delete(`/Cart/delete-cart-item/${cartItemId}`),
 };
 
+export const orderApi = {
+  create: (data) => api.post("/Order", data),
+  getMyOrders: () => api.get("/Order/my-orders"),
+  getAll: (page = 1, pageSize = 10) =>
+    api.get("/Order/all-orders", { params: { page, pageSize } }),
+  getByStatus: (statusId, page = 1, pageSize = 10) =>
+    api.get(`/Order/all-orders-by-status/${statusId}`, {
+      params: { page, pageSize },
+    }),
+  getAdminDetail: (orderId) => api.get(`/Order/admin/${orderId}`),
+  updateStatus: (orderId, newOrderStatusId) =>
+    api.put(`/Order/updateStatus/${orderId}`, newOrderStatusId, {
+      headers: { "Content-Type": "application/json" },
+    }),
+  cancelByAdmin: (orderId, reason) =>
+    api.put(`/Order/admin/${orderId}/cancel`, { reason }),
+  cancelMyOrder: (orderId) => api.put(`/Order/cancel-my-order/${orderId}`),
+  adminSearch: (params = {}) => api.get("/Order/admin-search", { params }),
+  preview: (data) => api.post("/Order/preview", data),
+};
+
 export default api;
