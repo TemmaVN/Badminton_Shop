@@ -9,7 +9,8 @@ import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useUser } from '../contexts/UserContext';
-import { orderApi } from '../api';
+
+const DEV_MSG = "⚠️ Server đang xây dựng phần này của hệ thống. Vui lòng thử lại sau!";
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -96,42 +97,8 @@ const CartPage = () => {
       setStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      setIsLoading(true);
-      setOrderError('');
-      try {
-        const orderPayload = {
-          receiverName: formData.fullName,
-          phoneNumber: formData.phoneNumber,
-          shippingAddress: `${formData.address}, ${formData.district}, ${formData.city}`,
-          note: formData.note || '',
-          paymentMethod: paymentMethod,
-          orderDetails: displayItems.map(item => ({
-            detailId: item.detailId,
-            quantity: item.quantity,
-          })),
-        };
-
-        const response = await orderApi.create(orderPayload);
-        if (response.status === 200 || response.status === 201) {
-          // Xóa giỏ hàng nếu không phải mua ngay
-          if (!isSingleItem) {
-            for (let item of cart) {
-              await deleteCartItem(item.cartItemId);
-            }
-            await fetchCart();
-          }
-          alert('Đặt hàng thành công! 🎉');
-          navigate('/');
-        } else {
-          throw new Error(response.data?.message || 'Đặt hàng thất bại');
-        }
-      } catch (error) {
-        const msg = error.response?.data?.message || error.message || 'Đặt hàng thất bại. Vui lòng thử lại!';
-        setOrderError(msg);
-        alert(msg);
-      } finally {
-        setIsLoading(false);
-      }
+      alert(DEV_MSG);
+      setOrderError(DEV_MSG);
     }
   };
 

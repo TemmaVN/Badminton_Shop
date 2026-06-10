@@ -12,7 +12,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: "http://localhost:5000",
+        target: "http://localhost:5001",
         changeOrigin: true,
         secure: false,
         configure: (proxy, options) => {
@@ -22,7 +22,7 @@ export default defineConfig({
             res.end(
               JSON.stringify({
                 message:
-                  "Backend not available. Make sure backend is running on port 5000",
+                  "Backend not available. Make sure backend is running on port 5001",
               }),
             );
           });

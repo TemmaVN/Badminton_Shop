@@ -1,87 +1,112 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import { UserProvider } from './contexts/UserContext';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { CategoryProvider } from './contexts/CategoryContext';
+import { ProductProvider } from './contexts/ProductContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { UserProvider } from './contexts/UserContext';
+import { useMediaQuery } from './mystate/useMediaQuery';
+
 import PageHeader from './layouts/PageHeader';
 import MainHeader from './layouts/MainHeader';
-import MenuHeader from './layouts/MenuHeader';
-import { useMediaQuery } from './mystate/useMediaQuery';
-import Advertisement from './components/Advertisement';
+import Footer from './layouts/Footer';
+import Admin from './layouts/Admin';
+import CartPage from './layouts/CartPage';
+import Contract from './layouts/Contract';
+import HomePage from './layouts/HomePage';
 import Login from './layouts/Login';
-import Register from './layouts/Register';
+import MyOrder from './layouts/MyOrder';
 import Product from './layouts/Product';
 import ProductDetail from './layouts/ProductDetail';
-import Admin from './layouts/Admin';
+import Register from './layouts/Register';
+import UserInfor from './layouts/UserInfor';
+import VoucherPage from './layouts/VoucherPage';
+
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminInfo from './components/admin/AdminInfo';
+import Brand from './components/admin/Brand';
+import Categories from './components/admin/Categories';
 import Dashboard from './components/admin/Dashboard';
+import OrderList from './components/admin/OrderList';
+import Payment from './components/admin/Payment';
+import ProductList from './components/admin/ProductList';
 import Statistics from './components/admin/Statistics';
 import UserList from './components/admin/UserList';
-import AdminInfo from './components/admin/AdminInfo';
-import UserInfor from './layouts/UserInfor';
-import MyOrder from './layouts/MyOrder';
-import CartDrawer from './layouts/CartDrawer';
-import CartPage from './layouts/CartPage';
+import VoucherManagement from './components/admin/VoucherManagement';
+import WarrantyManagement from './components/admin/WarrantyManagement';
 
-const UserLayout = ({ isMenuOpen, setIsMenuOpen, isCartOpen, setIsCartOpen, children }) => {
-  const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
+function AppContent() {
+  const { isAdmin } = useAuth();
+  const location = useLocation();
+  const showMainHeader = useMediaQuery('(min-width: 1250px)') && !isAdmin();
+  const adminOnlyPaths = ['/', '/login', '/register'];
+
+  if (isAdmin() && adminOnlyPaths.includes(location.pathname)) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
   return (
-    <div className="bg-white relative h-auto w-full">
-      <PageHeader setIsMenuOpen={setIsMenuOpen} setIsCartOpen={setIsCartOpen} />
-      {isHideMainHeader && <MainHeader />}
-      <MenuHeader isOpen={isMenuOpen} setIsOpen={setIsMenuOpen} />
-      {children}
-      <CartDrawer isOpen={isCartOpen} setIsOpen={setIsCartOpen} />
+    <div className="bg-white dark:bg-slate-950 min-h-screen w-full">
+      {!isAdmin() && <PageHeader />}
+      {showMainHeader && <MainHeader />}
+
+      <Routes>
+        {/* Public */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/contract" element={<Contract />} />
+        <Route path="/khuyen-mai" element={<VoucherPage />} />
+        <Route path="/sales" element={<Navigate to="/khuyen-mai" replace />} />
+        <Route path="/p/:productSlug" element={<ProductDetail />} />
+        <Route path="/:categorySlug/*" element={<Product />} />
+
+        {/* Protected – user */}
+        <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+        <Route path="/user-info" element={<ProtectedRoute><UserInfor /></ProtectedRoute>} />
+        <Route path="/myorder" element={<ProtectedRoute><MyOrder /></ProtectedRoute>} />
+
+        {/* Admin */}
+        <Route path="/admin" element={<ProtectedRoute adminOnly={true}><Admin /></ProtectedRoute>}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="product" element={<ProductList />} />
+          <Route path="categories" element={<Categories />} />
+          <Route path="brands" element={<Brand />} />
+          <Route path="orders" element={<OrderList />} />
+          <Route path="users-list" element={<UserList />} />
+          <Route path="payment" element={<Payment />} />
+          <Route path="admin-info" element={<AdminInfo />} />
+          <Route path="warranty" element={<WarrantyManagement />} />
+          <Route path="statistics" element={<Statistics />} />
+          <Route path="vouchers" element={<VoucherManagement />} />
+        </Route>
+
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to={isAdmin() ? '/admin/dashboard' : '/'} replace />} />
+      </Routes>
+
+      {!isAdmin() && <Footer />}
     </div>
-  );
-};
-
-function App() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-
-  return (
-    <AuthProvider>
-      <UserProvider>
-        <CartProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Admin routes - wrapped inside Admin layout (no header/footer) */}
-              <Route element={<Admin />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/statistics" element={<Statistics />} />
-                <Route path="/users" element={<UserList />} />
-                <Route path="/admin-info" element={<AdminInfo />} />
-              </Route>
-
-              {/* Public routes - wrapped inside user layout with header */}
-              <Route
-                path="*"
-                element={
-                  <UserLayout
-                    isMenuOpen={isMenuOpen}
-                    setIsMenuOpen={setIsMenuOpen}
-                    isCartOpen={isCartOpen}
-                    setIsCartOpen={setIsCartOpen}
-                  >
-                    <Routes>
-                      <Route path="/" element={<Advertisement />} />
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/register" element={<Register />} />
-                      <Route path="/products/:categorySlug" element={<Product />} />
-                      <Route path="/p/:productSlug" element={<ProductDetail />} />
-                      <Route path="/user-info" element={<UserInfor />} />
-                      <Route path="/myorder" element={<MyOrder />} />
-                      <Route path="/cart" element={<CartPage />} />
-                    </Routes>
-                  </UserLayout>
-                }
-              />
-            </Routes>
-          </BrowserRouter>
-        </CartProvider>
-      </UserProvider>
-    </AuthProvider>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <ThemeProvider>
+        <UserProvider>
+          <CartProvider>
+            <CategoryProvider>
+              <ProductProvider>
+                <BrowserRouter>
+                  <AppContent />
+                </BrowserRouter>
+              </ProductProvider>
+            </CategoryProvider>
+          </CartProvider>
+        </UserProvider>
+      </ThemeProvider>
+    </AuthProvider>
+  );
+}

@@ -120,12 +120,6 @@ export const brandApi = {
   delete: (id) => api.delete(`/Brand/${id}`),
 };
 
-export const orderApi = {
-  getMyOrders: () => api.get('/Order/my-orders'),
-  cancel: (orderId) => api.put(`/Order/cancel/${orderId}`),
-  create: (data) => api.post('/Order/create', data),
-};
-
 export const cartApi = {
   getMyCart: () => api.get("/Cart/my-cart"),
   addToCart: (detailId, quantity) =>

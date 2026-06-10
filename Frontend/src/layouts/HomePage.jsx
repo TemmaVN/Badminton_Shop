@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Advertisement from "../components/Advertisement";
+import { useCategory } from "../contexts/CategoryContext";
+import { productApi } from "../api";
 import CategoryShowcase from "../components/CategoryShowcase";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react"; // Import icon để làm hiệu ứng
 
 // SVG Quả cầu lông
 const ShuttlecockSVG = ({ className }) => (
@@ -49,23 +51,28 @@ const RacketSVG = ({ className }) => (
 
 // TẠO COMPONENT HIỆU ỨNG TRANG TRÍ CHUYỂN ĐỘNG 2 BÊN VIỀN
 const AnimatedSideDecoration = ({ side }) => {
+  // Tạo mảng 16 phần tử tương ứng với 16 lớp icon xếp chồng lên nhau
   const items = Array.from({ length: 16 });
   const isLeft = side === "left";
 
   return (
     <div
+      // Chỉ hiện ở màn hình lớn (xl:flex), đặt absolute cố định ở 2 bên mép
       className={`absolute top-[18%] pointer-events-none hidden xl:flex ${
         isLeft ? "left-2 2xl:left-10" : "right-2 2xl:right-10"
       }`}
     >
+      {/* Cột 1 */}
       <div className="flex flex-col -space-y-6">
         {items.map((_, i) => (
           <ChevronDown
             key={`c1-${i}`}
-            size={48}
+            size={48} // Kích thước to ngang
             className="animate-flowing-arrows"
             style={{
+              // Làm mờ dần về phía cuối dải
               opacity: Math.max(0, 1 - i * 0.06),
+              // Độ trễ chuyển động nối tiếp nhau tạo thành làn sóng mượt mà hơn
               animationDelay: `${i * 0.15}s`,
             }}
           />
@@ -89,7 +96,7 @@ const FloatingBadmintonDeco = ({ side }) => {
         style={{ animationDelay: "0s" }}
       >
         <ShuttlecockSVG
-          className={`w-20 h-20 ${isLeft ? "rotate-[15deg]" : "-rotate-[15deg]"}`}
+          className={`w-20 h-20 ${isLeft ? "rotate-15" : "-rotate-15"}`}
         />
       </div>
       <div
@@ -97,7 +104,7 @@ const FloatingBadmintonDeco = ({ side }) => {
         style={{ animationDelay: "1.5s" }}
       >
         <RacketSVG
-          className={`w-24 h-24 ${isLeft ? "rotate-[-30deg]" : "rotate-[30deg]"}`}
+          className={`w-24 h-24 ${isLeft ? "rotate-[-30deg]" : "rotate-30"}`}
         />
       </div>
       <div
@@ -105,240 +112,12 @@ const FloatingBadmintonDeco = ({ side }) => {
         style={{ animationDelay: "0.8s" }}
       >
         <ShuttlecockSVG
-          className={`w-16 h-16 ${isLeft ? "rotate-[75deg]" : "-rotate-[75deg]"}`}
+          className={`w-16 h-16 ${isLeft ? "rotate-75" : "-rotate-75"}`}
         />
       </div>
     </div>
   );
 };
-
-// =============================================
-// DỮ LIỆU MẪU TĨNH
-// =============================================
-
-const CATEGORIES = [
-  { categoryId: 1, categoryName: "Vợt cầu lông", slug: "vot-cau-long" },
-  { categoryId: 2, categoryName: "Giày cầu lông", slug: "giay-cau-long" },
-  { categoryId: 3, categoryName: "Bao vợt & Balo", slug: "bao-vot-balo" },
-];
-
-const HOME_PRODUCTS = {
-  "Vợt cầu lông": [
-    {
-      productId: 1,
-      categoryName: "Vợt cầu lông",
-      productName: "Vợt Cầu Lông Yonex Astrox 88D Pro",
-      basePrice: 4500000,
-      sellingPrice: 3990000,
-      isBestSeller: true,
-      discountPercent: 11,
-      mainImageUrl: "https://picsum.photos/seed/racket1/400/400",
-      slug: "yonex-astrox-88d-pro",
-    },
-    {
-      productId: 2,
-      categoryName: "Vợt cầu lông",
-      productName: "Vợt Cầu Lông Victor Thruster K 9900",
-      basePrice: 3800000,
-      sellingPrice: 3800000,
-      isBestSeller: false,
-      discountPercent: 0,
-      mainImageUrl: "https://picsum.photos/seed/racket2/400/400",
-      slug: "victor-thruster-k-9900",
-    },
-    {
-      productId: 3,
-      categoryName: "Vợt cầu lông",
-      productName: "Vợt Cầu Lông Li-Ning Turbo Charging 20",
-      basePrice: 5200000,
-      sellingPrice: 4680000,
-      isBestSeller: true,
-      discountPercent: 10,
-      mainImageUrl: "https://picsum.photos/seed/racket3/400/400",
-      slug: "lining-turbo-charging-20",
-    },
-    {
-      productId: 4,
-      categoryName: "Vợt cầu lông",
-      productName: "Vợt Cầu Lông Yonex Nanoflare 800",
-      basePrice: 6000000,
-      sellingPrice: 5400000,
-      isBestSeller: false,
-      discountPercent: 10,
-      mainImageUrl: "https://picsum.photos/seed/racket4/400/400",
-      slug: "yonex-nanoflare-800",
-    },
-    {
-      productId: 5,
-      categoryName: "Vợt cầu lông",
-      productName: "Vợt Cầu Lông Victor Brave Sword 12",
-      basePrice: 2900000,
-      sellingPrice: 2610000,
-      isBestSeller: false,
-      discountPercent: 10,
-      mainImageUrl: "https://picsum.photos/seed/racket5/400/400",
-      slug: "victor-brave-sword-12",
-    },
-    {
-      productId: 6,
-      categoryName: "Vợt cầu lông",
-      productName: "Vợt Cầu Lông Kawasaki Master 6600",
-      basePrice: 1800000,
-      sellingPrice: 1620000,
-      isBestSeller: false,
-      discountPercent: 10,
-      mainImageUrl: "https://picsum.photos/seed/racket6/400/400",
-      slug: "kawasaki-master-6600",
-    },
-  ],
-  "Giày cầu lông": [
-    {
-      productId: 7,
-      categoryName: "Giày cầu lông",
-      productName: "Giày Cầu Lông Yonex Power Cushion 65Z3",
-      basePrice: 3200000,
-      sellingPrice: 2880000,
-      isBestSeller: true,
-      discountPercent: 10,
-      mainImageUrl: "https://picsum.photos/seed/shoe1/400/400",
-      slug: "yonex-power-cushion-65z3",
-    },
-    {
-      productId: 8,
-      categoryName: "Giày cầu lông",
-      productName: "Giày Cầu Lông Victor A780 III",
-      basePrice: 2600000,
-      sellingPrice: 2340000,
-      isBestSeller: false,
-      discountPercent: 10,
-      mainImageUrl: "https://picsum.photos/seed/shoe2/400/400",
-      slug: "victor-a780-iii",
-    },
-    {
-      productId: 9,
-      categoryName: "Giày cầu lông",
-      productName: "Giày Cầu Lông Li-Ning Ranger TD",
-      basePrice: 2200000,
-      sellingPrice: 1980000,
-      isBestSeller: true,
-      discountPercent: 10,
-      mainImageUrl: "https://picsum.photos/seed/shoe3/400/400",
-      slug: "lining-ranger-td",
-    },
-    {
-      productId: 10,
-      categoryName: "Giày cầu lông",
-      productName: "Giày Cầu Lông Kawasaki K-063",
-      basePrice: 1500000,
-      sellingPrice: 1350000,
-      isBestSeller: false,
-      discountPercent: 10,
-      mainImageUrl: "https://picsum.photos/seed/shoe4/400/400",
-      slug: "kawasaki-k063",
-    },
-    {
-      productId: 11,
-      categoryName: "Giày cầu lông",
-      productName: "Giày Cầu Lông Yonex SHB 65X2",
-      basePrice: 2800000,
-      sellingPrice: 2800000,
-      isBestSeller: false,
-      discountPercent: 0,
-      mainImageUrl: "https://picsum.photos/seed/shoe5/400/400",
-      slug: "yonex-shb-65x2",
-    },
-    {
-      productId: 12,
-      categoryName: "Giày cầu lông",
-      productName: "Giày Cầu Lông Victor SH-A960",
-      basePrice: 3500000,
-      sellingPrice: 2975000,
-      isBestSeller: true,
-      discountPercent: 15,
-      mainImageUrl: "https://picsum.photos/seed/shoe6/400/400",
-      slug: "victor-sh-a960",
-    },
-  ],
-  "Bao vợt & Balo": [
-    {
-      productId: 13,
-      categoryName: "Bao vợt & Balo",
-      productName: "Balo Cầu Lông Yonex BA92229 6 in 1",
-      basePrice: 1800000,
-      sellingPrice: 1530000,
-      isBestSeller: true,
-      discountPercent: 15,
-      mainImageUrl: "https://picsum.photos/seed/bag1/400/400",
-      slug: "yonex-ba92229-6in1",
-    },
-    {
-      productId: 14,
-      categoryName: "Bao vợt & Balo",
-      productName: "Túi Đựng Vợt Victor BR9611 3 in 1",
-      basePrice: 950000,
-      sellingPrice: 855000,
-      isBestSeller: false,
-      discountPercent: 10,
-      mainImageUrl: "https://picsum.photos/seed/bag2/400/400",
-      slug: "victor-br9611-3in1",
-    },
-    {
-      productId: 15,
-      categoryName: "Bao vợt & Balo",
-      productName: "Balo Cầu Lông Li-Ning ABSU392",
-      basePrice: 1200000,
-      sellingPrice: 1080000,
-      isBestSeller: false,
-      discountPercent: 10,
-      mainImageUrl: "https://picsum.photos/seed/bag3/400/400",
-      slug: "lining-absu392",
-    },
-    {
-      productId: 16,
-      categoryName: "Bao vợt & Balo",
-      productName: "Túi Đựng Vợt Kawasaki KBB-8150 2 in 1",
-      basePrice: 650000,
-      sellingPrice: 650000,
-      isBestSeller: false,
-      discountPercent: 0,
-      mainImageUrl: "https://picsum.photos/seed/bag4/400/400",
-      slug: "kawasaki-kbb-8150",
-    },
-    {
-      productId: 17,
-      categoryName: "Bao vợt & Balo",
-      productName: "Balo Cầu Lông Yonex BA92426 12 in 1",
-      basePrice: 2500000,
-      sellingPrice: 2125000,
-      isBestSeller: true,
-      discountPercent: 15,
-      mainImageUrl: "https://picsum.photos/seed/bag5/400/400",
-      slug: "yonex-ba92426-12in1",
-    },
-    {
-      productId: 18,
-      categoryName: "Bao vợt & Balo",
-      productName: "Túi Đựng Vợt Victor BR9609 6 in 1",
-      basePrice: 1100000,
-      sellingPrice: 990000,
-      isBestSeller: false,
-      discountPercent: 10,
-      mainImageUrl: "https://picsum.photos/seed/bag6/400/400",
-      slug: "victor-br9609-6in1",
-    },
-  ],
-};
-
-const CATEGORY_IMAGES = {
-  "Vợt cầu lông":
-    "https://static.fbshop.vn/wp-content/uploads/2024/01/Artboard-5-copy-2@2x.webp",
-  "Giày cầu lông":
-    "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-balo.webp",
-  "Bao vợt & Balo":
-    "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-balo.webp",
-};
-
-// =============================================
 
 const HomePage = () => {
   const linkAdvertisement = [
@@ -349,18 +128,70 @@ const HomePage = () => {
     "https://static.fbshop.vn/wp-content/uploads/2026/01/anh-banner-website-4000x1425-1-1920x684.jpg",
   ];
 
+  const { categories } = useCategory();
+  const [homeProducts, setHomeProducts] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHomeProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await productApi.getHomeProducts();
+        const allProducts = response.data.data || [];
+        const groupedProducts = allProducts.reduce((acc, product) => {
+          const { categoryName } = product;
+          if (!acc[categoryName]) {
+            acc[categoryName] = [];
+          }
+          acc[categoryName].push(product);
+          return acc;
+        }, {});
+        setHomeProducts(groupedProducts);
+      } catch (error) {
+        console.error("Failed to fetch home products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHomeProducts();
+  }, []);
+
+  console.log(categories)
+
+  const categoryImages = {
+    "Vợt cầu lông":
+      "https://static.fbshop.vn/wp-content/uploads/2024/01/Artboard-5-copy-2@2x.webp",
+    "Giày cầu lông":
+      "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-balo.webp",
+    "Balo cầu lông":
+      "https://res.cloudinary.com/dfbelvtzh/image/upload/v1780300391/Artboard-5-copy-3_2x_f1xdfi.webp",
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-white dark:bg-slate-950 text-gray-800 dark:text-white">
+        Đang tải...
+      </div>
+    );
+  }
+
   return (
-    <div className="relative w-full overflow-hidden bg-white">
+    // Wrap toàn bộ bằng relative overflow-hidden để mỏ neo cho cái Decoration
+    <div className="relative w-full overflow-hidden bg-white dark:bg-slate-950">
+      {/* CSS KEYFRAMES CHO HIỆU ỨNG SÓNG CHUYỂN ĐỘNG */}
       <style>
         {`
           @keyframes flowing-arrows {
-            0%, 100% { transform: translateY(0) scaleY(0.4); color: #fdba74; }
-            50% { transform: translateY(8px) scaleY(0.4); color: #ea580c; }
+            /* scaleY(0.4) giúp ép dẹt hình chữ V tạo thành vạch xiên giống ảnh */
+            0%, 100% { transform: translateY(0) scaleY(0.4); color: #fdba74; } /* Cam nhạt */
+            50% { transform: translateY(8px) scaleY(0.4); color: #ea580c; } /* Cam đậm */
           }
           .animate-flowing-arrows {
             animation: flowing-arrows 2s infinite ease-in-out;
           }
 
+          /* Hiệu ứng bay lơ lửng cho quả cầu / vợt */
           @keyframes float {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-15px); }
@@ -376,15 +207,18 @@ const HomePage = () => {
 
       <Advertisement linkAdvertisement={linkAdvertisement} />
 
-      <div className="relative bg-gray-50 py-1">
+      <div className="relative bg-gray-50 dark:bg-slate-950 py-1">
+        {/* RENDER DẢI TRANG TRÍ CHẠY DỌC 2 BÊN */}
         <AnimatedSideDecoration side="left" />
         <AnimatedSideDecoration side="right" />
 
+        {/* RENDER HIỆU ỨNG CẦU LÔNG VÀ VỢT */}
         <FloatingBadmintonDeco side="left" />
         <FloatingBadmintonDeco side="right" />
 
-        {CATEGORIES.map((category) => {
-          const productsForCategory = HOME_PRODUCTS[category.categoryName];
+        {/* Nội dung danh sách sản phẩm */}
+        {categories.map((category) => {
+          const productsForCategory = homeProducts[category.categoryName];
           if (!productsForCategory || productsForCategory.length === 0) {
             return null;
           }
@@ -394,7 +228,7 @@ const HomePage = () => {
               category={category}
               products={productsForCategory}
               categoryImage={
-                CATEGORY_IMAGES[category.categoryName] ||
+                categoryImages[category.categoryName] ||
                 "https://images.unsplash.com/photo-1599481238640-4c12727c393a?w=500&q=80"
               }
             />
