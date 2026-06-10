@@ -5,7 +5,7 @@ import FlashButton from './FlashButton';
 import { useUser } from '../contexts/UserContext';
 
 const Information = () => {
-  const { user, updateProfile, getUserInfo } = useUser();
+  const { user, UpdateProfile, getUserInfo } = useUser();
   const [fullName, setFullName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [email, setEmail] = useState('');
