@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { productApi } from "../api";
 
@@ -66,6 +67,102 @@ export const ProductProvider = ({ children }) => {
     }
   }, []);
 
+  // ─── Tìm kiếm sản phẩm cho trang Admin (trả về brandName, categoryName) ───
+  const searchProductsAdmin = useCallback(async (params = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await productApi.getForAdmin(params);
+      const data = response.data;
+      setProducts(data.items ?? []);
+      setPaginationFromResponse({
+        totalCount: data.totalCount,
+        totalPages: data.totalPages,
+        page: data.page,
+      });
+      return data;
+    } catch (err) {
+      const msg = err.response?.data?.message ?? err.message;
+      setError(msg);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  const addProduct = useCallback(async (data) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await productApi.create(data);
+      return response.data; // trả về { message, productId } cho caller
+    } catch (err) {
+      const msg =
+        err.response?.data?.message ?? // message từ backend
+        err.response?.data?.errors ?? // ModelState errors
+        err.message;
+      setError(typeof msg === "object" ? JSON.stringify(msg) : msg);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  const updateProduct = useCallback(async (id, data) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await productApi.update(id, data);
+      const updated = response.data;
+
+      setProducts((prev) =>
+        prev.map((p) => (p.productId === id ? { ...p, ...updated } : p)),
+      );
+      return updated;
+    } catch (err) {
+      const msg = err.response?.data?.message ?? err.message;
+      setError(msg);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ─── Xóa sản phẩm (Admin) ─────────────────────────────────────────────────
+  /**
+   * return: true | false
+   */
+  const deleteProduct = useCallback(async (id) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await productApi.delete(id);
+      setProducts((prev) => prev.filter((p) => p.productId !== id));
+      return true;
+    } catch (err) {
+      const msg = err.response?.data?.message ?? err.message;
+      setError(msg);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ─── Thêm detail (biến thể / serial) vào sản phẩm đã có (Admin) ─────────
+  /**
+   * payload: { productDetailRequests: [...] }
+   * return: { message, productId } | null
+   */
+  const addProductDetails = useCallback(async (productId, payload) => {
+    setError(null);
+    try {
+      const response = await productApi.addDetails(productId, payload);
+      return response.data;
+    } catch (err) {
+      const msg = err.response?.data?.message ?? err.message;
+      setError(typeof msg === "object" ? JSON.stringify(msg) : msg);
+      return null;
+    }
+  }, []);
+
   // ─── Xóa error thủ công (dùng ở UI nếu cần) ──────────────────────────────
   const clearError = useCallback(() => setError(null), []);
   // ─── Lấy chi tiết 1 sản phẩm theo slug ───────────────────────────────────
@@ -85,6 +182,64 @@ export const ProductProvider = ({ children }) => {
       setLoading(false);
     }
   }, []);
+
+  const importFromFile = useCallback(async (file) => {
+    if (!file) return null;
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await productApi.importFromFile(formData);
+      return {
+        success: true,
+        message: res.data?.message && "Thêm sản phẩm bằng file thành công",
+      };
+    } catch (err) {
+      const msg =
+        err.response?.data?.message ?? // message từ backend
+        err.response?.data?.errors ?? // ModelState errors
+        err.message;
+      setError(typeof msg === "object" ? JSON.stringify(msg) : msg);
+      return {
+        success: false,
+        message: msg,
+      };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const exportFromFile = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await productApi.exportFromFile();
+
+      const disposition = res.headers["content-disposition"] || "";
+      const match = disposition.match(
+        /filename\*?=(?:UTF-8'')?["']?([^"';]+)/i,
+      );
+      const fileName = match
+        ? decodeURIComponent(match[1])
+        : `Products_Export_${Date.now()}.xlsx`;
+
+      const blob = new Blob([res.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      return {
+        fileName: fileName,
+        blob: blob,
+      };
+    } catch (err) {
+      const msg =
+        err.response?.data?.message ??
+        err.response?.data?.errors ??
+        err.message;
+      setError(typeof msg === "object" ? JSON.stringify(msg) : msg);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
   // ─── Value ────────────────────────────────────────────────────────────────
   const value = {
     // state
@@ -96,7 +251,13 @@ export const ProductProvider = ({ children }) => {
     // actions
     getProductDetaildBySlug,
     searchProducts,
+    searchProductsAdmin,
     fetchProductsBySlug,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    importFromFile,
+    exportFromFile,
     clearError,
   };
 

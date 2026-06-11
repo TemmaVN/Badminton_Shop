@@ -89,6 +89,60 @@ export const productApi = {
     }),
 
   getProductDetaildBySlug: (slug) => api.get(`/Product/${slug}`),
+  getForAdmin: (params = {}) =>
+    api.get("/Product/product-management", { params }),
+
+  getTopProducts: (params = {}) =>
+    api.get("/admin/statistic/products/top", { params }),
+
+  create: (data) => api.post("/Product", data),
+
+  update: (id, data) => api.put(`/Product/${id}`, data),
+
+  delete: (id) => api.delete(`/Product/${id}`),
+
+  getVariants: (productId, params = {}) =>
+    api.get(`/Product/${productId}/management-details`, { params }),
+
+  addVariant: (productId, data) =>
+    api.post(`/Product/${productId}/management-details`, data),
+
+  updateVariant: (detailId, data) =>
+    api.put(`/Product/management-details/${detailId}`, data),
+
+  deleteVariant: (detailId) =>
+    api.delete(`/Product/management-details/${detailId}`),
+
+  getSerials: (detailId, params = {}) =>
+    api.get(`/Product/management-details/${detailId}/serials`, { params }),
+
+  addSerial: (detailId, data) =>
+    api.post(`/Product/management-details/${detailId}/serials`, data),
+
+  // Quản lý ảnh sản phẩm
+  getImages: (productId) => api.get(`/Product/${productId}/management-images`),
+
+  addImage: (productId, data) =>
+    api.post(`/Product/${productId}/management-images`, data),
+
+  setMainImage: (productId, imageId) =>
+    api.put(`/Product/${productId}/management-images/set-main/${imageId}`),
+
+  reorderImages: (productId, data) =>
+    api.put(`/Product/management-images/reOrder`, data, {
+      params: { productId },
+    }),
+
+  deleteImage: (imageId) => api.delete(`/Product/management-images/${imageId}`),
+
+  importFromFile: (formData) =>
+    api.post(`/Product/admin/import-excel`, formData),
+
+  exportFromFile: () =>
+    api.get(`/Product/admin/export-excel`, { responseType: "blob" }),
+};
+export const metaDataApi = {
+  get: () => api.get("/MetaData"),
 };
 
 // Category API
