@@ -9,7 +9,6 @@ import {useNavigate} from "react-router-dom"
 import CartDrawer from './CartDrawer'
 import { useCart } from '../contexts/CartContext'
 import { productApi } from '../api'
-import { useTheme } from '../contexts/ThemeContext'
 
 const formatPrice = (price) => {
   if (!price || price <= 0) return null;
@@ -36,7 +35,6 @@ const PageHeader = () => {
   const navigate = useNavigate();
 
   const { totalItems } = useCart();
-  const { isDark, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -209,13 +207,6 @@ const PageHeader = () => {
           <div className='flex gap-2'>
             <Button size='icon' className='md:hidden' onClick={() => setShowFullWidthSearch(true)}>
               <Search/>
-            </Button>
-            <Button
-              size='icon'
-              onClick={toggleTheme}
-              title={isDark ? 'Chuyển sang sáng' : 'Chuyển sang tối'}
-            >
-              {isDark ? <Sun size={20}/> : <Moon size={20}/>}
             </Button>
             <Link to="/khuyen-mai" title="Khuyến mãi & Voucher">
               <Button size='icon'>

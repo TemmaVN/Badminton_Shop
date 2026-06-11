@@ -1,112 +1,119 @@
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { CartProvider } from './contexts/CartContext';
-import { CategoryProvider } from './contexts/CategoryContext';
-import { ProductProvider } from './contexts/ProductContext';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { UserProvider } from './contexts/UserContext';
-import { useMediaQuery } from './mystate/useMediaQuery';
+import PageHeader from "./layouts/PageHeader";
+import MainHeader from "./layouts/MainHeader";
+import { useMediaQuery } from "./mystate/useMediaQuery";
+import Login from "./layouts/Login";
+import Register from "./layouts/Register";
+import { BrowserRouter, Route, Routes, Navigate, useLocation} from "react-router-dom";
+import Contract from "./layouts/Contract";
+import Product from "./layouts/Product";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { useAuth } from "./contexts/AuthContext";
+import UserInfo from "./layouts/UserInfo";
+import { UserProvider } from "./contexts/UserContext";
+import Admin from "./layouts/Admin";
+import { ProductProvider } from "./contexts/ProductContext";
+import { CategoryProvider } from "./contexts/CategoryContext";
+import Dashboard from "./components/admin/Dashboard";
+import ProductList from "./components/admin/ProductList";
+import Categories from "./components/admin/Categories";
+import Brand from "./components/admin/Brand";
+import OrderList from "./components/admin/OrderList";
+import HomePage from "./layouts/HomePage";
+import ProductDetail from "./layouts/ProductDetail";
+import Footer from "./layouts/Footer";
+import { CartProvider } from "./contexts/CartContext";
+import CartPage from "./layouts/CartPage";
+import UserList from "./components/admin/UserList";
+import Payment from "./components/admin/Payment";
+import WarrantyManagement from "./components/admin/WarrantyManagement";
+import Statistics from "./components/admin/Statistics";
+import VoucherManagement from "./components/admin/VoucherManagement";
+import VoucherPage from "./layouts/VoucherPage";
 
-import PageHeader from './layouts/PageHeader';
-import MainHeader from './layouts/MainHeader';
-import Footer from './layouts/Footer';
-import Admin from './layouts/Admin';
-import CartPage from './layouts/CartPage';
-import Contract from './layouts/Contract';
-import HomePage from './layouts/HomePage';
-import Login from './layouts/Login';
-import MyOrder from './layouts/MyOrder';
-import Product from './layouts/Product';
-import ProductDetail from './layouts/ProductDetail';
-import Register from './layouts/Register';
-import UserInfor from './layouts/UserInfor';
-import VoucherPage from './layouts/VoucherPage';
+const PublicRoute = ({ children }) => {
+  return children;
+};
 
-import ProtectedRoute from './components/ProtectedRoute';
-import AdminInfo from './components/admin/AdminInfo';
-import Brand from './components/admin/Brand';
-import Categories from './components/admin/Categories';
-import Dashboard from './components/admin/Dashboard';
-import OrderList from './components/admin/OrderList';
-import Payment from './components/admin/Payment';
-import ProductList from './components/admin/ProductList';
-import Statistics from './components/admin/Statistics';
-import UserList from './components/admin/UserList';
-import VoucherManagement from './components/admin/VoucherManagement';
-import WarrantyManagement from './components/admin/WarrantyManagement';
-
-function AppContent() {
+function AppRoutes() {
   const { isAdmin } = useAuth();
   const location = useLocation();
-  const showMainHeader = useMediaQuery('(min-width: 1250px)') && !isAdmin();
-  const adminOnlyPaths = ['/', '/login', '/register'];
+  const adminRedirectPaths = ['/', '/login', '/register'];
 
-  if (isAdmin() && adminOnlyPaths.includes(location.pathname)) {
+  if (isAdmin() && adminRedirectPaths.includes(location.pathname)) {
     return <Navigate to="/admin/dashboard" replace />;
   }
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<PublicRoute><HomePage/></PublicRoute>} />
+      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/contract" element={<PublicRoute><Contract /></PublicRoute>} />
+      <Route path="/khuyen-mai" element={<PublicRoute><VoucherPage /></PublicRoute>} />
+
+      {/* Product and Category Routes */}
+      <Route path="/p/:productSlug" element={<PublicRoute><ProductDetail /></PublicRoute>} />
+      <Route path="/:categorySlug/*" element={<PublicRoute><Product /></PublicRoute>} />
+
+      {/* User Routes */}
+      <Route path="/cart" element={<ProtectedRoute><CartPage/></ProtectedRoute>} />
+      <Route path="user-info" element={<ProtectedRoute><UserInfo /></ProtectedRoute>} />
+
+      {/* Admin Routes */}
+      <Route path="/admin" element={<ProtectedRoute adminOnly={true}><Admin /></ProtectedRoute>}>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="product">
+          <Route index element={<ProductList />} />
+        </Route>
+        <Route path="categories" element={<Categories />} />
+        <Route path="brands" element={<Brand />} />
+        <Route path="orders" element={<OrderList />} />
+        <Route path="users-list" element={<UserList />} />
+        <Route path="payment" element={<Payment />} />
+        <Route path="admin-info" element={<UserInfo />} />
+        <Route path="warranty" element={<WarrantyManagement />} />
+        <Route path="statistics" element={<Statistics />} />
+        <Route path="vouchers" element={<VoucherManagement />} />
+      </Route>
+
+      <Route path="*" element={isAdmin() ? <Navigate to="/admin" replace /> : <Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+function AppLayout() {
+  const { isAdmin } = useAuth();
+  const isHidePageHeader = !isAdmin();
+  const isHideMainHeader = useMediaQuery("(min-width: 1250px)") && !isAdmin();
 
   return (
-    <div className="bg-white dark:bg-slate-950 min-h-screen w-full">
-      {!isAdmin() && <PageHeader />}
-      {showMainHeader && <MainHeader />}
-
-      <Routes>
-        {/* Public */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/contract" element={<Contract />} />
-        <Route path="/khuyen-mai" element={<VoucherPage />} />
-        <Route path="/sales" element={<Navigate to="/khuyen-mai" replace />} />
-        <Route path="/p/:productSlug" element={<ProductDetail />} />
-        <Route path="/:categorySlug/*" element={<Product />} />
-
-        {/* Protected – user */}
-        <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
-        <Route path="/user-info" element={<ProtectedRoute><UserInfor /></ProtectedRoute>} />
-        <Route path="/myorder" element={<ProtectedRoute><MyOrder /></ProtectedRoute>} />
-
-        {/* Admin */}
-        <Route path="/admin" element={<ProtectedRoute adminOnly={true}><Admin /></ProtectedRoute>}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="product" element={<ProductList />} />
-          <Route path="categories" element={<Categories />} />
-          <Route path="brands" element={<Brand />} />
-          <Route path="orders" element={<OrderList />} />
-          <Route path="users-list" element={<UserList />} />
-          <Route path="payment" element={<Payment />} />
-          <Route path="admin-info" element={<AdminInfo />} />
-          <Route path="warranty" element={<WarrantyManagement />} />
-          <Route path="statistics" element={<Statistics />} />
-          <Route path="vouchers" element={<VoucherManagement />} />
-        </Route>
-
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to={isAdmin() ? '/admin/dashboard' : '/'} replace />} />
-      </Routes>
-
-      {!isAdmin() && <Footer />}
+    <div className="bg-white dark:bg-slate-950 h-auto w-full">
+      {isHidePageHeader && <PageHeader />}
+      {isHideMainHeader && <MainHeader />}
+      <ProductProvider>
+        <AppRoutes />
+      </ProductProvider>
+      <Footer />
     </div>
   );
 }
 
-export default function App() {
+function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
+    <BrowserRouter>
+      <AuthProvider>
         <UserProvider>
-          <CartProvider>
-            <CategoryProvider>
-              <ProductProvider>
-                <BrowserRouter>
-                  <AppContent />
-                </BrowserRouter>
-              </ProductProvider>
-            </CategoryProvider>
-          </CartProvider>
+          <CategoryProvider>
+            <CartProvider>
+              <AppLayout />
+            </CartProvider>
+          </CategoryProvider>
         </UserProvider>
-      </ThemeProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
+
+export default App;
