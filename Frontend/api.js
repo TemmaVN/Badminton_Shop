@@ -69,6 +69,16 @@ export const userApi = {
       detailedAddress,
     }),
   get_info: () => api.get("/User/user-info"),
+  getAll: (page = 1, pageSize = 10) =>
+    api.get("/User", { params: { page, pageSize } }),
+  search: (keyword) => api.get("/User/search", { params: { keyword } }),
+  create: (userData) => api.post("/User", userData),
+  // Admin endpoints
+  setActive: (userId, isActive) =>
+    api.put(`/User/admin/${userId}/active`, { isActive }),
+  getAdminDetail: (userId) => api.get(`/User/admin/${userId}`),
+  getAdminOrderHistory: (userId, params = {}) =>
+    api.get(`/User/admin/${userId}/orders`, { params }),
 };
 
 // Product API
@@ -89,8 +99,11 @@ export const productApi = {
     }),
 
   getProductDetaildBySlug: (slug) => api.get(`/Product/${slug}`),
-  getForAdmin: (params = {}) =>
-    api.get("/Product/product-management", { params }),
+
+  getForAdmin: ({ pageSize, ...rest } = {}) =>
+    api.get("/Product/product-management", {
+      params: { ...rest, pagesize: pageSize },
+    }),
 
   getTopProducts: (params = {}) =>
     api.get("/admin/statistic/products/top", { params }),
@@ -140,7 +153,22 @@ export const productApi = {
 
   exportFromFile: () =>
     api.get(`/Product/admin/export-excel`, { responseType: "blob" }),
+
+  importVariantsExcel: (productId, formData) =>
+    api.post(
+      `/Product/${productId}/management-details/import-excel`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    ),
+
+  exportVariantsExcel: (productId) =>
+    api.get(`/Product/${productId}/management-details/export-excel`, {
+      responseType: "blob",
+    }),
 };
+
 export const metaDataApi = {
   get: () => api.get("/MetaData"),
 };
@@ -148,6 +176,7 @@ export const metaDataApi = {
 // Category API
 export const categoryApi = {
   getAll: () => api.get("/Category"),
+  getById: (id) => api.get(`/Category/${id}`),
   create: (categoryName) =>
     api.post("/Category", `"${categoryName}"`, {
       headers: { "Content-Type": "application/json" },
@@ -158,6 +187,9 @@ export const categoryApi = {
     }),
   delete: (id) => api.delete(`/Category/${id}`),
 };
+
+// api.js
+// ... (các config axios cũ giữ nguyên)
 
 export const brandApi = {
   getAll: () => api.get("/Brand"),
@@ -186,6 +218,7 @@ export const cartApi = {
     api.delete(`/Cart/delete-cart-item/${cartItemId}`),
 };
 
+// Order API
 export const orderApi = {
   create: (data) => api.post("/Order", data),
   getMyOrders: () => api.get("/Order/my-orders"),
@@ -196,16 +229,50 @@ export const orderApi = {
       params: { page, pageSize },
     }),
   getAdminDetail: (orderId) => api.get(`/Order/admin/${orderId}`),
-  updateStatus: (orderId, newOrderStatusId) =>
-    api.put(`/Order/updateStatus/${orderId}`, newOrderStatusId, {
-      headers: { "Content-Type": "application/json" },
-    }),
+  updateStatus: (orderId, body) =>
+    api.put(`/Order/updateStatus/${orderId}`, body),
   cancelByAdmin: (orderId, reason) =>
     api.put(`/Order/admin/${orderId}/cancel`, { reason }),
   cancelMyOrder: (orderId) => api.put(`/Order/cancel-my-order/${orderId}`),
   adminSearch: (params = {}) => api.get("/Order/admin-search", { params }),
   preview: (data) => api.post("/Order/preview", data),
 };
+
+export const warrantyApi = {
+  create: (formData) =>
+    api.post("/Warranty", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  getMyWarranties: () => api.get("/Warranty/my-claims"),
+  getAll: (params = {}) => api.get("/Warranty", { params }),
+  updateStatus: (warrantyId, status, adminNote) =>
+    api.put(`/Warranty/${warrantyId}/status`, { status, adminNote }),
+  delete: (warrantyId) => api.delete(`/Warranty/${warrantyId}`),
+};
+
+export const statisticApi = {
+  getOverview: (params = {}) =>
+    api.get("/admin/statistic/overview", { params }),
+  getRevenueByCategoy: (params = {}) =>
+    api.get("/admin/statistic/revenue/category", { params }),
+  getRevenueByBrand: (params = {}) =>
+    api.get("/admin/statistic/revenue/brand", { params }),
+  getRevenueByMonth: (params = {}) =>
+    api.get("/admin/statistic/revenue/monthly", { params }),
+  getRevenueCategoryByMonth: (params = {}) =>
+    api.get("/admin/statistic/revenue/category-monthly", { params }),
+  getFullReport: (params = {}) =>
+    api.get("/admin/statistic/full-report", { params }),
+  getOrderStatus: (params = {}) =>
+    api.get("/admin/statistic/orders/status", { params }),
+  getRevenueByPaymentMethod: (params = {}) =>
+    api.get("/admin/statistic/revenue/payment-method", { params }),
+  getVoucherEffectiveness: (params = {}) =>
+    api.get("/admin/statistic/vouchers/effectiveness", { params }),
+  getTopCustomers: (params = {}) =>
+    api.get("/admin/statistic/customers/top", { params }),
+};
+
 export const voucherApi = {
   // POST - returns vouchers applicable to a specific cart/checkout (requires auth)
   getAvailableVouchers: (data) => api.post("/Voucher/my-voucher", data ?? {}),
@@ -213,10 +280,85 @@ export const voucherApi = {
   getAllAvailable: () => api.get("/Voucher/all-available"),
   saveVoucher: (voucherId) => api.post(`/Voucher/save/${voucherId}`),
   adminCreate: (data) => api.post("/Voucher/admin/add", data),
-  adminGet: (page = 1, pageSize = 10) =>
-    api.get("/Voucher/admin", { params: { page, pageSize } }),
-  adminSetVoucherActive: (voucherId, isActive) =>
-    api.put(`/Voucher/admin/${voucherId}/active`, { isActive }, data),
+  // Admin endpoints
+  adminGetAll: (params = {}) => api.get("/Voucher/admin", { params }),
+  adminSetActive: (voucherId, isActive) =>
+    api.put(`/Voucher/admin/${voucherId}/active`, { isActive }),
+};
+
+// Review API
+export const reviewApi = {
+  // Public
+  getByProduct: (productId, page = 1, pageSize = 10) =>
+    api.get(`/Review/product/${productId}`, { params: { page, pageSize } }),
+
+  // Customer (auth required)
+  getMyReviews: (page = 1, pageSize = 10) =>
+    api.get("/Review/my-reviews", { params: { page, pageSize } }),
+  getMyReviewableItems: (page = 1, pageSize = 10) =>
+    api.get("/Review/my-reviewable-items", { params: { page, pageSize } }),
+  getByOrder: (orderId) => api.get(`/Order/${orderId}/reviews`),
+  create: (data) => api.post("/Review", data),
+  update: (reviewId, data) => api.put(`/Review/${reviewId}`, data),
+  delete: (reviewId) => api.delete(`/Review/${reviewId}`),
+
+  // Admin (auth + Admin role)
+  getForAdmin: (params = {}) => api.get("/Review/admin", { params }),
+  setVisibility: (reviewId, isVisible) =>
+    api.put(`/Review/admin/${reviewId}/visibility`, { isVisible }),
+};
+
+// Admin Management API
+export const adminManagementApi = {
+  getAuditLogs: (params = {}) =>
+    api.get("/admin/management/audit-logs", { params }),
+  createAuditLog: (data) => api.post("/admin/management/audit-logs", data),
+  getAlertSummary: (params = {}) =>
+    api.get("/admin/management/alerts/summary", { params }),
+  getSlowMovingProducts: (params = {}) =>
+    api.get("/admin/management/products/slow-moving", { params }),
+};
+
+// Inventory API
+export const inventoryApi = {
+  getLowStock: (threshold = 5) =>
+    api.get("/admin/inventory/low-stock", { params: { threshold } }),
+  getSerialsByStatus: (status, page = 1, pageSize = 10) =>
+    api.get("/admin/inventory/serials/by-status", {
+      params: { status, page, pageSize },
+    }),
+  markDefective: (serialId) =>
+    api.put(`/admin/inventory/serials/${serialId}/mark-defective`),
+  markInStock: (serialId) =>
+    api.put(`/admin/inventory/serials/${serialId}/mark-in-stock`),
+};
+
+// Return Request API
+export const returnApi = {
+  // Public
+  getReasons: () => api.get("/Return/reasons"),
+
+  // Customer (auth required)
+  getDeliveryProofs: (orderId) =>
+    api.get(`/Return/orders/${orderId}/delivery-proofs`),
+  createRequest: (data) => api.post("/Return/request", data),
+  getMyRequests: (page = 1, pageSize = 10) =>
+    api.get("/Return/my-requests", { params: { page, pageSize } }),
+  getMyRequestDetail: (returnRequestId) =>
+    api.get(`/Return/my-requests/${returnRequestId}`),
+
+  // Admin
+  addDeliveryProof: (orderId, data) =>
+    api.post(`/Return/admin/orders/${orderId}/delivery-proofs`, data),
+  adminGetAll: (params = {}) => api.get("/Return/admin/requests", { params }),
+  adminGetDetail: (returnRequestId) =>
+    api.get(`/Return/admin/requests/${returnRequestId}`),
+  adminApprove: (returnRequestId, data) =>
+    api.put(`/Return/admin/requests/${returnRequestId}/approve`, data),
+  adminReject: (returnRequestId, data) =>
+    api.put(`/Return/admin/requests/${returnRequestId}/reject`, data),
+  adminMarkRefunded: (returnRequestId, data) =>
+    api.put(`/Return/admin/requests/${returnRequestId}/mark-refunded`, data),
 };
 
 export default api;
