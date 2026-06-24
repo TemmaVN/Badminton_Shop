@@ -2,6 +2,7 @@ import { User, LogOut, Filter, Menu, Plus, Search, Sun, Moon, Bell, Settings, Ch
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMediaQuery } from '../../mystate/useMediaQuery';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Dữ liệu quản trị viên mẫu
 const MOCK_ADMIN = { fullName: "Quản trị viên", role: "Admin" };
@@ -12,12 +13,12 @@ const Header = ({ onToggleSidebar }) => {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const isMedium = useMediaQuery('(min-width: 1280px)');
+  const { logout } = useAuth();
 
-  const user = (() => {
-    try { return JSON.parse(localStorage.getItem('user')) ?? MOCK_ADMIN; }
-    catch { return MOCK_ADMIN; }
+  const fullName = (() => {
+    try { return JSON.parse(localStorage.getItem('user'))?.fullName ?? MOCK_ADMIN.fullName; }
+    catch { return MOCK_ADMIN.fullName; }
   })();
-  const fullName = user?.fullName ?? MOCK_ADMIN.fullName;
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -31,9 +32,11 @@ const Header = ({ onToggleSidebar }) => {
 
   const handleLogout = (e) => {
     e.preventDefault();
-    localStorage.removeItem('user');
-    alert("Đăng xuất thành công");
-    navigate('/');
+    // Phải gọi logout() của AuthContext để xóa token + userRole và reset state.
+    // Nếu chỉ xóa 'user', userRole vẫn còn -> isAdmin() vẫn true -> bị đẩy lại /admin.
+    logout();
+    setIsProfileOpen(false);
+    navigate('/', { replace: true });
   };
 
   return (

@@ -1,16 +1,26 @@
 // src/layouts/CartPage.jsx
 import React, { useState, useEffect } from 'react';
-import { 
-  ChevronLeftIcon, MapPinIcon, CreditCardIcon, BanknotesIcon, 
+import {
+  ChevronLeftIcon, MapPinIcon, CreditCardIcon, BanknotesIcon,
   WalletIcon, DevicePhoneMobileIcon, ShieldCheckIcon, ChevronRightIcon,
-  UserIcon, PhoneIcon, MapIcon, HomeIcon, DocumentTextIcon, ShoppingBagIcon
+  UserIcon, PhoneIcon, MapIcon, HomeIcon, DocumentTextIcon, ShoppingBagIcon,
+  TagIcon, ChevronDownIcon, ChevronUpIcon
 } from '@heroicons/react/24/outline';
-import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useUser } from '../contexts/UserContext';
+import { useVoucher } from '../contexts/VoucherContext';
+import { useOrder } from '../contexts/OrderContext';
+import { orderApi } from '../api';
 
-const DEV_MSG = "⚠️ Server đang xây dựng phần này của hệ thống. Vui lòng thử lại sau!";
+// Ánh xạ key thanh toán UI -> giá trị paymentMethod backend
+const PAYMENT_METHOD_MAP = {
+  COD: 'COD',
+  bank: 'Bank Transfer',
+  momo: 'E-Wallet',
+  zalopay: 'E-Wallet',
+};
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -20,11 +30,22 @@ const CartPage = () => {
 
   const { cart, fetchCart, deleteCartItem } = useCart();
   const { user, getUserInfo } = useUser();
+  const { getCheckoutVouchers } = useVoucher();
+  const { createOrder } = useOrder();
 
   const [step, setStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [isLoading, setIsLoading] = useState(false);
   const [orderError, setOrderError] = useState('');
+
+  // Voucher / preview state
+  const [vouchers, setVouchers] = useState([]);
+  const [selectedVoucherIds, setSelectedVoucherIds] = useState([]);
+  const [voucherOpen, setVoucherOpen] = useState(false);
+  const [preview, setPreview] = useState(null);
+
+  // paymentMethod gửi cho backend (đã ánh xạ)
+  const backendPaymentMethod = PAYMENT_METHOD_MAP[paymentMethod] ?? 'COD';
 
   // Hiển thị sản phẩm: nếu mua ngay thì chỉ 1 item, nếu từ giỏ hàng thì lấy từ cart
   const displayItems = isSingleItem
@@ -88,6 +109,62 @@ const CartPage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Chi tiết đơn cho voucher/preview/order
+  const orderDetails = displayItems.map(item => ({
+    detailId: item.detailId,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+  }));
+
+  // Lấy danh sách voucher áp dụng được khi vào bước 2 hoặc đổi phương thức thanh toán
+  useEffect(() => {
+    if (step !== 2 || displayItems.length === 0) return;
+    let cancelled = false;
+    getCheckoutVouchers(orderDetails, backendPaymentMethod)
+      .then(list => {
+        if (cancelled) return;
+        const arr = Array.isArray(list) ? list : [];
+        setVouchers(arr);
+        // Bỏ chọn voucher không còn áp dụng được (đổi phương thức thanh toán)
+        const eligibleIds = new Set(arr.filter(v => v.isEligible !== false).map(v => v.voucherId));
+        setSelectedVoucherIds(prev => prev.filter(id => eligibleIds.has(id)));
+      })
+      .catch(() => { if (!cancelled) setVouchers([]); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, paymentMethod, displayItems.length]);
+
+  const buildOrderPayload = () => ({
+    receiverName: formData.fullName,
+    phoneNumber: formData.phoneNumber,
+    shippingAddress: `${formData.address}, ${formData.district}, ${formData.city}`,
+    paymentMethod: backendPaymentMethod,
+    voucherIds: selectedVoucherIds,
+    orderDetails: displayItems.map(item => ({
+      detailId: item.detailId,
+      quantity: item.quantity,
+    })),
+  });
+
+  // Xem trước tổng tiền (đã trừ voucher) khi đổi voucher/phương thức ở bước 2
+  useEffect(() => {
+    if (step !== 2 || displayItems.length === 0) return;
+    let cancelled = false;
+    orderApi.preview(buildOrderPayload())
+      .then(res => { if (!cancelled) setPreview(res.data ?? null); })
+      .catch(() => { if (!cancelled) setPreview(null); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, paymentMethod, selectedVoucherIds, displayItems.length]);
+
+  const toggleVoucher = (id) =>
+    setSelectedVoucherIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+
+  const totalDiscount = preview?.totalDiscount ?? 0;
+  const finalTotal = preview?.finalAmount ?? subtotal;
+
   const handleNextAction = async () => {
     if (step === 1) {
       if (!formData.fullName || !formData.phoneNumber || !formData.address) {
@@ -97,8 +174,35 @@ const CartPage = () => {
       setStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      alert(DEV_MSG);
-      setOrderError(DEV_MSG);
+      setIsLoading(true);
+      setOrderError('');
+      try {
+        const payload = buildOrderPayload();
+        const previewRes = await orderApi.preview(payload);
+        if (previewRes.data && previewRes.data.isValid === false) {
+          setOrderError(previewRes.data.errorMessage || 'Đơn hàng không hợp lệ. Vui lòng kiểm tra lại.');
+          return;
+        }
+        const result = await createOrder(payload);
+        if (result.success) {
+          if (!isSingleItem) {
+            try {
+              await Promise.all(cart.map(item => deleteCartItem(item.cartItemId)));
+              await fetchCart();
+            } catch {
+              fetchCart().catch(() => {});
+            }
+          }
+          alert('Đặt hàng thành công! 🎉');
+          navigate('/');
+        } else {
+          setOrderError(result.message || 'Đặt hàng thất bại. Vui lòng thử lại!');
+        }
+      } catch (error) {
+        setOrderError(error.response?.data?.message || 'Đặt hàng thất bại. Vui lòng thử lại!');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -236,6 +340,64 @@ const CartPage = () => {
                 </div>
               ))}
             </div>
+            {/* ── Voucher selector (chỉ hiện ở bước xác nhận) ── */}
+            {step === 2 && vouchers.some(v => v.isEligible !== false) && (
+              <div className="mt-5 border border-dashed border-orange-200 rounded-2xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setVoucherOpen(o => !o)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-orange-50/60 hover:bg-orange-50 transition-colors"
+                >
+                  <span className="flex items-center gap-2 text-sm font-semibold text-orange-700">
+                    <TagIcon className="w-4 h-4" />
+                    Mã giảm giá
+                    {selectedVoucherIds.length > 0 && (
+                      <span className="bg-orange-default text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                        {selectedVoucherIds.length}
+                      </span>
+                    )}
+                  </span>
+                  {voucherOpen
+                    ? <ChevronUpIcon className="w-4 h-4 text-orange-500" />
+                    : <ChevronDownIcon className="w-4 h-4 text-orange-500" />}
+                </button>
+
+                {voucherOpen && (
+                  <div className="divide-y divide-orange-50 max-h-56 overflow-y-auto">
+                    {vouchers.filter(v => v.isEligible !== false).map(v => {
+                      const isSelected = selectedVoucherIds.includes(v.voucherId);
+                      const meetsMin = subtotal >= (v.minOrderValue ?? 0);
+                      return (
+                        <button
+                          key={v.voucherId}
+                          type="button"
+                          onClick={() => meetsMin && toggleVoucher(v.voucherId)}
+                          disabled={!meetsMin}
+                          className={`w-full text-left flex items-center gap-3 px-4 py-3 transition-colors
+                            ${isSelected ? 'bg-emerald-50' : meetsMin ? 'hover:bg-gray-50' : 'opacity-50 cursor-not-allowed bg-white'}`}
+                        >
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors
+                            ${isSelected ? 'bg-emerald-500 border-emerald-500' : 'border-gray-300'}`}>
+                            {isSelected && <CheckIcon className="w-3 h-3 text-white" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold font-mono text-gray-800 truncate">{v.voucherCode}</p>
+                            <p className="text-[11px] text-gray-500 truncate">
+                              {v.isPercent ? `Giảm ${v.discountValue}%` : `Giảm ${(v.discountValue ?? 0).toLocaleString()}đ`}
+                              {' · '}Tối thiểu {(v.minOrderValue ?? 0).toLocaleString()}đ
+                            </p>
+                          </div>
+                          {!meetsMin && (
+                            <span className="text-[10px] text-gray-400 shrink-0">Chưa đủ ĐK</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="pt-6 space-y-4 mt-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500 font-medium">Tạm tính</span>
@@ -245,13 +407,27 @@ const CartPage = () => {
                 <span className="text-gray-500 font-medium">Phí vận chuyển</span>
                 <span className="font-bold text-orange-default">Miễn phí</span>
               </div>
+              {totalDiscount > 0 && (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500 font-medium">Giảm giá</span>
+                    <span className="font-bold text-emerald-600">−{Math.round(totalDiscount).toLocaleString()} đ</span>
+                  </div>
+                  {preview?.appliedVouchers?.map((av, i) => (
+                    <div key={i} className="flex justify-between text-xs pl-2">
+                      <span className="text-emerald-600 font-mono">{av.voucherCode}</span>
+                      <span className="text-emerald-600">−{Math.round(av.appliedDiscount ?? 0).toLocaleString()}đ</span>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
             <div className="mt-4 p-3 bg-green-50 border border-green-100 text-green-600 rounded-xl text-xs font-medium flex items-center gap-2">
               🎉 Bạn được miễn phí vận chuyển!
             </div>
             <div className="flex justify-between items-center pt-6 border-t border-dashed border-gray-200 mt-6">
               <span className="font-black text-lg">Tổng cộng</span>
-              <span className="text-2xl font-black text-orange-default">{subtotal.toLocaleString()} đ</span>
+              <span className="text-2xl font-black text-orange-default">{Math.round(finalTotal).toLocaleString()} đ</span>
             </div>
           </div>
         </div>

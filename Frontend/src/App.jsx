@@ -14,11 +14,21 @@ import { UserProvider } from "./contexts/UserContext";
 import Admin from "./layouts/Admin";
 import { ProductProvider } from "./contexts/ProductContext";
 import { CategoryProvider } from "./contexts/CategoryContext";
+import { OrderProvider } from "./contexts/OrderContext";
+import { VoucherProvider } from "./contexts/VoucherContext";
+import { ReviewProvider } from "./contexts/ReviewContext";
+import { StatisticProvider } from "./contexts/StatisticContext";
+import { InventoryProvider } from "./contexts/InventoryContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import Dashboard from "./components/admin/Dashboard";
 import ProductList from "./components/admin/ProductList";
+import AdminProductDetail from "./components/admin/AdminProductDetail";
 import Categories from "./components/admin/Categories";
 import Brand from "./components/admin/Brand";
 import OrderList from "./components/admin/OrderList";
+import ReviewManagement from "./components/admin/ReviewManagement";
+import ReturnRequestManagement from "./components/admin/ReturnRequestManagement";
+import InventoryManagement from "./components/admin/InventoryManagement";
 import HomePage from "./layouts/HomePage";
 import ProductDetail from "./layouts/ProductDetail";
 import Footer from "./layouts/Footer";
@@ -66,10 +76,14 @@ function AppRoutes() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="product">
           <Route index element={<ProductList />} />
+          <Route path=":productId" element={<AdminProductDetail />} />
         </Route>
         <Route path="categories" element={<Categories />} />
         <Route path="brands" element={<Brand />} />
+        <Route path="inventory" element={<InventoryManagement />} />
         <Route path="orders" element={<OrderList />} />
+        <Route path="returns" element={<ReturnRequestManagement />} />
+        <Route path="reviews" element={<ReviewManagement />} />
         <Route path="users-list" element={<UserList />} />
         <Route path="payment" element={<Payment />} />
         <Route path="admin-info" element={<UserInfo />} />
@@ -103,15 +117,27 @@ function AppLayout() {
 function App() {
   return (
     <BrowserRouter>
+      <ThemeProvider>
       <AuthProvider>
         <UserProvider>
           <CategoryProvider>
             <CartProvider>
-              <AppLayout />
+              <OrderProvider>
+                <VoucherProvider>
+                  <ReviewProvider>
+                    <StatisticProvider>
+                      <InventoryProvider>
+                        <AppLayout />
+                      </InventoryProvider>
+                    </StatisticProvider>
+                  </ReviewProvider>
+                </VoucherProvider>
+              </OrderProvider>
             </CartProvider>
           </CategoryProvider>
         </UserProvider>
       </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useProduct } from '../contexts/ProductContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useReview } from '../contexts/ReviewContext';
 
 const formatPrice = (price) => Number(price).toLocaleString('vi-VN') + 'đ';
 
@@ -116,6 +117,7 @@ const MOCK_PRODUCT_DETAILS = {
 };
 
 const normalizeApiProduct = (data) => ({
+  productId: data.productId,
   productName: data.productName,
   image: data.mainImageUrl,
   images: (data.imgaes || []).map((img, idx) => ({
@@ -133,6 +135,7 @@ const ProductDetail = () => {
   const { addToCart, fetchCart } = useCart();
   const { getProductDetaildBySlug } = useProduct();
   const { isAuthenticated } = useAuth();
+  const { productReviews, averageRating, pagination, loading: reviewsLoading, fetchProductReviews } = useReview();
 
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState(null);
@@ -141,11 +144,16 @@ const ProductDetail = () => {
   const [selectedImageOrder, setSelectedImageOrder] = useState(1);
   const [selectedWeight, setSelectedWeight] = useState(null);
   const [selectedGrip, setSelectedGrip] = useState(null);
+  const [reviewPage, setReviewPage] = useState(1);
+  const REVIEW_PAGE_SIZE = 5;
+
+  const reviewTotal = pagination?.totalCount ?? 0;
+  const reviewTotalPages = pagination?.totalPages ?? 1;
 
   const tabs = [
     { id: 'description', label: 'Mô tả sản phẩm' },
     { id: 'specs', label: 'Thông số kỹ thuật' },
-    { id: 'reviews', label: 'Đánh giá 0 ⭐' },
+    { id: 'reviews', label: `Đánh giá${reviewTotal > 0 ? ` (${reviewTotal}) ${averageRating.toFixed(1)}⭐` : ''}` },
   ];
 
   useEffect(() => {
@@ -173,6 +181,12 @@ const ProductDetail = () => {
       setSelectedGrip(product.variants[0].gripSize);
     }
   }, [product]);
+
+  useEffect(() => {
+    if (!product?.productId || activeTab !== 'reviews') return;
+    fetchProductReviews(product.productId, reviewPage, REVIEW_PAGE_SIZE);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.productId, activeTab, reviewPage]);
 
   const weightOptions = [...new Set(product?.variants?.map(v => v.weightClass) ?? [])];
   const gripOptions = [...new Set(product?.variants?.map(v => v.gripSize) ?? [])];
@@ -430,8 +444,62 @@ const ProductDetail = () => {
               </div>
             )}
             {activeTab === 'reviews' && (
-              <div className="py-20 text-center text-gray-400 animate-fadeIn">
-                Chưa có đánh giá nào cho sản phẩm này.
+              <div className="animate-fadeIn space-y-4">
+                {reviewsLoading ? (
+                  <div className="py-20 text-center text-gray-400">Đang tải đánh giá...</div>
+                ) : productReviews.length === 0 ? (
+                  <div className="py-20 text-center text-gray-400">Chưa có đánh giá nào cho sản phẩm này.</div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3 pb-3 border-b border-orange-100">
+                      <span className="text-3xl font-black text-slate-800">{averageRating.toFixed(1)}</span>
+                      <div>
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map(s => (
+                            <span key={s} className={`text-lg ${s <= Math.round(averageRating) ? 'text-amber-400' : 'text-gray-300'}`}>★</span>
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-400">{reviewTotal} đánh giá</p>
+                      </div>
+                    </div>
+                    {productReviews.map(rv => (
+                      <div key={rv.reviewId} className="border-b border-orange-100 py-4 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-sm text-slate-800">{rv.userName}</span>
+                          <span className="text-xs text-gray-400">
+                            {rv.reviewDate ? new Date(rv.reviewDate).toLocaleDateString('vi-VN') : ''}
+                          </span>
+                        </div>
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map(s => (
+                            <span key={s} className={`text-sm ${s <= rv.rating ? 'text-amber-400' : 'text-gray-300'}`}>★</span>
+                          ))}
+                        </div>
+                        {rv.comment && <p className="text-sm text-slate-700">{rv.comment}</p>}
+                        {rv.images?.length > 0 && (
+                          <div className="flex gap-2 flex-wrap pt-1">
+                            {rv.images.map((img, i) => (
+                              <img key={i} src={img} alt="" className="h-16 w-16 object-cover rounded-lg border border-gray-100" />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {reviewTotalPages > 1 && (
+                      <div className="flex gap-2 justify-center pt-2">
+                        <button disabled={reviewPage === 1} onClick={() => setReviewPage(p => p - 1)}
+                          className="px-3 py-1 text-sm rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-slate-50">
+                          ‹
+                        </button>
+                        <span className="px-3 py-1 text-sm text-slate-600">{reviewPage} / {reviewTotalPages}</span>
+                        <button disabled={reviewPage === reviewTotalPages} onClick={() => setReviewPage(p => p + 1)}
+                          className="px-3 py-1 text-sm rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-slate-50">
+                          ›
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>

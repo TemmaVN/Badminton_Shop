@@ -1,36 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { MoreHorizontal, TrendingUp, TrendingDown } from 'lucide-react';
+import { useOrder } from '../../contexts/OrderContext';
 
-const SAMPLE_ORDERS = [
-  {
-    orderId: "ORD001",
-    receiverName: "Nguyễn Văn A",
-    totalAmount: "5,200,000đ",
-    status: "Hoàn tất",
-    orderDate: "2025-05-20",
-  },
-  {
-    orderId: "ORD002",
-    receiverName: "Trần Thị B",
-    totalAmount: "3,450,000đ",
-    status: "Đang giao hàng",
-    orderDate: "2025-05-19",
-  },
-  {
-    orderId: "ORD003",
-    receiverName: "Lê Văn C",
-    totalAmount: "2,890,000đ",
-    status: "Chờ xác nhận",
-    orderDate: "2025-05-18",
-  },
-  {
-    orderId: "ORD004",
-    receiverName: "Phạm Thị D",
-    totalAmount: "6,750,000đ",
-    status: "Đã xác nhận",
-    orderDate: "2025-05-17",
-  },
-];
 
 const topProducts = [
   {
@@ -74,25 +45,28 @@ const STATUSES = {
   8: { text: "Đã huỷ", color: "bg-red-100 text-red-600" },
 };
 
+// Chuẩn hoá trạng thái: backend có thể trả về id (số) hoặc chuỗi văn bản
+const resolveStatus = (rawStatus) => {
+  if (rawStatus === undefined || rawStatus === null) {
+    return { text: "Không xác định", color: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400" };
+  }
+  if (STATUSES[rawStatus]) return STATUSES[rawStatus];
+  const found = Object.values(STATUSES).find(
+    (s) => s.text.toLowerCase() === String(rawStatus).toLowerCase().trim()
+  );
+  return found || { text: String(rawStatus), color: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400" };
+};
+
 
 function TableSection() {
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const handleCloseDetail = () => {
-    setSelectedOrder(null);
-  };
-  const getStatusColor = (status) => {
-    const statusEntry = Object.values(STATUSES).find(
-      (item) => item.text === status
-    );
-    
-    if (statusEntry) {
-      return statusEntry.color;
-    }
-    
-    return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400";
-  };
+  const { orders, fetchAllOrders, getRecentOrders } = useOrder();
 
-    const ordersList = SAMPLE_ORDERS;
+  useEffect(() => {
+    fetchAllOrders(1, 200);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const ordersList = getRecentOrders(orders ?? [], 4);
   return (
     <div className="space-y-6">
       {/* Đơn hàng gần đây */}
@@ -118,33 +92,42 @@ function TableSection() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-200/50 dark:border-slate-700/50">
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
-                 Order ID
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
+                  Order ID
                 </th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Khách hàng
                 </th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Tổng tiền
                 </th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Trạng thái
                 </th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Ngày tạo
                 </th>
               </tr>
             </thead>
                 <tbody>
-                {ordersList.map((order, index) => (
-                    <tr 
-                    onClick={() => setSelectedOrder(order)}
-                    key={index} 
+                {ordersList.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-sm text-slate-400 dark:text-slate-500">
+                      Chưa có đơn hàng nào
+                    </td>
+                  </tr>
+                ) : (
+                ordersList.map((order, index) => {
+                    const statusInfo = resolveStatus(order.status);
+                    const amount = order.finalAmount ?? order.totalAmount ?? 0;
+                    return (
+                    <tr
+                    key={order.orderId ?? index}
                     className="border-b border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
                     >
                     <td className="p-4">
                         <span className="text-sm font-medium text-blue-600">
-                        {order.orderId}
+                        #{order.orderId}
                         </span>
                     </td>
                     <td className="p-4">
@@ -154,27 +137,29 @@ function TableSection() {
                     </td>
                     <td className="p-4">
                         <span className="text-sm text-slate-800 dark:text-white">
-                        {order.totalAmount}
+                        {Number(amount).toLocaleString("vi-VN")}₫
                         </span>
                     </td>
                     <td className="p-4">
-                        <span className={`text-xs font-medium px-3 py-1 rounded-full ${getStatusColor(order.status)}`}>
-                        {order.status}
+                        <span className={`text-xs font-medium px-3 py-1 rounded-full ${statusInfo.color}`}>
+                        {statusInfo.text}
                         </span>
                     </td>
                     <td className="p-4">
                         <div className="flex items-center justify-between">
                         <span className="text-sm text-slate-800 dark:text-white">
-                            {order.orderDate}
+                            {order.orderDate ? new Date(order.orderDate).toLocaleDateString("vi-VN") : "—"}
                         </span>
-                        <button 
+                        <button
                         className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                             <MoreHorizontal className="w-5 h-5" />
                         </button>
                         </div>
                     </td>
                     </tr>
-                ))}
+                    );
+                })
+                )}
                 </tbody>
           </table>
 
@@ -190,7 +175,7 @@ function TableSection() {
                 Sản phẩm bán chạy
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                 Hiệu suất bán hàng tốt nhất
+                Hiệu suất bán hàng tốt nhất
                 </p>
             </div>
             <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
@@ -201,8 +186,8 @@ function TableSection() {
 
         <div className="p-6 space-y-4">
             {topProducts.map((product, index) => (
-            <div 
-                key={index} 
+            <div
+                key={index}
                 className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
             >
                 <div className="flex-1">
@@ -210,7 +195,7 @@ function TableSection() {
                     {product.name}
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {product.sales} lượt bán
+                    {product.sales.toLocaleString()} lượt bán
                 </p>
                 </div>
 

@@ -42,6 +42,25 @@ api.interceptors.response.use(
   },
 );
 
+// Dùng fetch thay axios cho upload file — axios instance có default header
+// 'Content-Type: application/json' mà axios 1.x không override được khi gửi FormData,
+// dẫn đến 415. fetch() để browser tự set 'multipart/form-data; boundary=...'
+const uploadFormData = async (url, formData, method = "POST") => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}${url}`, {
+    method,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data?.message ?? data?.Message ?? res.statusText);
+    err.response = { status: res.status, data };
+    throw err;
+  }
+  return { data };
+};
+
 // Auth API
 export const authApi = {
   login: (email, password) => api.post("/auth/login", { email, password }),
@@ -89,8 +108,11 @@ export const productApi = {
     }),
 
   getProductDetaildBySlug: (slug) => api.get(`/Product/${slug}`),
-  getForAdmin: (params = {}) =>
-    api.get("/Product/product-management", { params }),
+
+  getForAdmin: ({ pageSize, ...rest } = {}) =>
+    api.get("/Product/product-management", {
+      params: { ...rest, pagesize: pageSize },
+    }),
 
   getTopProducts: (params = {}) =>
     api.get("/admin/statistic/products/top", { params }),
@@ -101,6 +123,7 @@ export const productApi = {
 
   delete: (id) => api.delete(`/Product/${id}`),
 
+  // ── Quản lý biến thể (variants) ──────────────────────────────────────────
   getVariants: (productId, params = {}) =>
     api.get(`/Product/${productId}/management-details`, { params }),
 
@@ -113,15 +136,35 @@ export const productApi = {
   deleteVariant: (detailId) =>
     api.delete(`/Product/management-details/${detailId}`),
 
+  importVariantsExcel: (productId, formData) =>
+    uploadFormData(
+      `/Product/${productId}/management-details/import-excel`,
+      formData,
+    ),
+
+  exportVariantsExcel: (productId) =>
+    api.get(`/Product/${productId}/management-details/export-excel`, {
+      responseType: "blob",
+    }),
+
+  // ── Quản lý serial ───────────────────────────────────────────────────────
   getSerials: (detailId, params = {}) =>
     api.get(`/Product/management-details/${detailId}/serials`, { params }),
 
   addSerial: (detailId, data) =>
     api.post(`/Product/management-details/${detailId}/serials`, data),
 
-  // Quản lý ảnh sản phẩm
+  // ── Quản lý ảnh sản phẩm ─────────────────────────────────────────────────
   getImages: (productId) => api.get(`/Product/${productId}/management-images`),
 
+  // Backend_ThucTap: tải file ảnh lên trước (multipart) -> nhận { imageUrl }
+  uploadImage: (file) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return uploadFormData(`/Product/upload-image`, fd);
+  },
+
+  // Backend_ThucTap: gắn ảnh vào sản phẩm bằng JSON { imageUrl, isMain }
   addImage: (productId, data) =>
     api.post(`/Product/${productId}/management-images`, data),
 
@@ -136,11 +179,12 @@ export const productApi = {
   deleteImage: (imageId) => api.delete(`/Product/management-images/${imageId}`),
 
   importFromFile: (formData) =>
-    api.post(`/Product/admin/import-excel`, formData),
+    uploadFormData(`/Product/admin/import-excel`, formData),
 
   exportFromFile: () =>
     api.get(`/Product/admin/export-excel`, { responseType: "blob" }),
 };
+
 export const metaDataApi = {
   get: () => api.get("/MetaData"),
 };
@@ -186,6 +230,7 @@ export const cartApi = {
     api.delete(`/Cart/delete-cart-item/${cartItemId}`),
 };
 
+// Order API
 export const orderApi = {
   create: (data) => api.post("/Order", data),
   getMyOrders: () => api.get("/Order/my-orders"),
@@ -196,6 +241,7 @@ export const orderApi = {
       params: { page, pageSize },
     }),
   getAdminDetail: (orderId) => api.get(`/Order/admin/${orderId}`),
+  // Backend_ThucTap: body là số nguyên thô (newOrderStatusId)
   updateStatus: (orderId, newOrderStatusId) =>
     api.put(`/Order/updateStatus/${orderId}`, newOrderStatusId, {
       headers: { "Content-Type": "application/json" },
@@ -206,17 +252,107 @@ export const orderApi = {
   adminSearch: (params = {}) => api.get("/Order/admin-search", { params }),
   preview: (data) => api.post("/Order/preview", data),
 };
+
+// Voucher API
 export const voucherApi = {
-  // POST - returns vouchers applicable to a specific cart/checkout (requires auth)
+  // POST - trả về voucher áp dụng được cho giỏ hàng/checkout (cần đăng nhập)
   getAvailableVouchers: (data) => api.post("/Voucher/my-voucher", data ?? {}),
-  // GET - returns all public available vouchers
+  // GET - tất cả voucher công khai
   getAllAvailable: () => api.get("/Voucher/all-available"),
   saveVoucher: (voucherId) => api.post(`/Voucher/save/${voucherId}`),
   adminCreate: (data) => api.post("/Voucher/admin/add", data),
-  adminGet: (page = 1, pageSize = 10) =>
-    api.get("/Voucher/admin", { params: { page, pageSize } }),
-  adminSetVoucherActive: (voucherId, isActive) =>
-    api.put(`/Voucher/admin/${voucherId}/active`, { isActive }, data),
+  adminGetAll: (params = {}) => api.get("/Voucher/admin", { params }),
+  adminSetActive: (voucherId, isActive) =>
+    api.put(`/Voucher/admin/${voucherId}/active`, { isActive }),
+};
+
+// Statistic API (admin)
+export const statisticApi = {
+  getOverview: (params = {}) => api.get("/admin/statistic/overview", { params }),
+  getRevenueByCategoy: (params = {}) =>
+    api.get("/admin/statistic/revenue/category", { params }),
+  getRevenueByBrand: (params = {}) =>
+    api.get("/admin/statistic/revenue/brand", { params }),
+  getRevenueByMonth: (params = {}) =>
+    api.get("/admin/statistic/revenue/monthly", { params }),
+  getRevenueCategoryByMonth: (params = {}) =>
+    api.get("/admin/statistic/revenue/category-monthly", { params }),
+  getFullReport: (params = {}) =>
+    api.get("/admin/statistic/full-report", { params }),
+  getOrderStatus: (params = {}) =>
+    api.get("/admin/statistic/orders/status", { params }),
+  getRevenueByPaymentMethod: (params = {}) =>
+    api.get("/admin/statistic/revenue/payment-method", { params }),
+  getVoucherEffectiveness: (params = {}) =>
+    api.get("/admin/statistic/vouchers/effectiveness", { params }),
+  getTopCustomers: (params = {}) =>
+    api.get("/admin/statistic/customers/top", { params }),
+};
+
+// Review API
+export const reviewApi = {
+  // Public
+  getByProduct: (productId, page = 1, pageSize = 10) =>
+    api.get(`/Review/product/${productId}`, { params: { page, pageSize } }),
+
+  // Customer (cần đăng nhập)
+  getMyReviews: (page = 1, pageSize = 10) =>
+    api.get("/Review/my-reviews", { params: { page, pageSize } }),
+  getMyReviewableItems: (page = 1, pageSize = 10) =>
+    api.get("/Review/my-reviewable-items", { params: { page, pageSize } }),
+  create: (data) => api.post("/Review", data),
+  update: (reviewId, data) => api.put(`/Review/${reviewId}`, data),
+  delete: (reviewId) => api.delete(`/Review/${reviewId}`),
+
+  // Admin (cần Admin role)
+  getForAdmin: (params = {}) => api.get("/Review/admin", { params }),
+  setVisibility: (reviewId, isVisible) =>
+    api.put(`/Review/admin/${reviewId}/visibility`, { isVisible }),
+};
+
+// Inventory API (admin)
+export const inventoryApi = {
+  getLowStock: (threshold = 5) =>
+    api.get("/admin/inventory/low-stock", { params: { threshold } }),
+  getSerialsByStatus: (status, page = 1, pageSize = 10) =>
+    api.get("/admin/inventory/serials/by-status", {
+      params: { status, page, pageSize },
+    }),
+  markDefective: (serialId) =>
+    api.put(`/admin/inventory/serials/${serialId}/mark-defective`),
+  markInStock: (serialId) =>
+    api.put(`/admin/inventory/serials/${serialId}/mark-in-stock`),
+};
+
+// Return Request API
+export const returnApi = {
+  // Public
+  getReasons: () => api.get("/Return/reasons"),
+
+  // Customer (cần đăng nhập)
+  getDeliveryProofs: (orderId) =>
+    api.get(`/Return/orders/${orderId}/delivery-proofs`),
+  createRequest: (data) => api.post("/Return/request", data),
+  getMyRequests: (page = 1, pageSize = 10) =>
+    api.get("/Return/my-requests", { params: { page, pageSize } }),
+  getMyRequestDetail: (returnRequestId) =>
+    api.get(`/Return/my-requests/${returnRequestId}`),
+
+  // Admin — Backend_ThucTap nhận JSON { imageUrl, note }
+  addDeliveryProof: (orderId, imageUrl, note) =>
+    api.post(`/Return/admin/orders/${orderId}/delivery-proofs`, {
+      imageUrl,
+      note,
+    }),
+  adminGetAll: (params = {}) => api.get("/Return/admin/requests", { params }),
+  adminGetDetail: (returnRequestId) =>
+    api.get(`/Return/admin/requests/${returnRequestId}`),
+  adminApprove: (returnRequestId, data) =>
+    api.put(`/Return/admin/requests/${returnRequestId}/approve`, data),
+  adminReject: (returnRequestId, data) =>
+    api.put(`/Return/admin/requests/${returnRequestId}/reject`, data),
+  adminMarkRefunded: (returnRequestId, data) =>
+    api.put(`/Return/admin/requests/${returnRequestId}/mark-refunded`, data),
 };
 
 export default api;

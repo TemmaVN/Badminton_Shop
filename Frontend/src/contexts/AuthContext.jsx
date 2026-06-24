@@ -80,14 +80,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ASP.NET phát JWT với role claim dạng URI dài (ClaimTypes.Role):
+  // "http://schemas.microsoft.com/ws/2008/06/identity/claims/role".
+  // Phải đọc cả key này, không chỉ role/roles.
+  const ROLE_CLAIM_URI =
+    "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+
   const isAdmin = () => {
     if (!userRole) return false; // ✅ đọc từ state thay vì localStorage
-    const roleData = userRole.role || userRole.roles;
+    const roleData =
+      userRole.role ?? userRole.roles ?? userRole[ROLE_CLAIM_URI];
     if (!roleData) return false;
-    if (Array.isArray(roleData)) {
-      return roleData.map((r) => r.toLowerCase()).includes("admin");
-    }
-    return roleData.toLowerCase() === "admin";
+    const roles = Array.isArray(roleData) ? roleData : [roleData];
+    return roles.map((r) => String(r).toLowerCase()).includes("admin");
   };
 
   const value = {

@@ -14,6 +14,7 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
+      // Backend_ThucTap chạy ở http://localhost:5001 (profile "http")
       "/api": {
         target: "http://localhost:5001",
         changeOrigin: true,
@@ -25,11 +26,17 @@ export default defineConfig({
             res.end(
               JSON.stringify({
                 message:
-                  "Backend not available. Make sure backend is running on port 5000",
+                  "Backend not available. Make sure Backend_ThucTap is running on port 5001",
               }),
             );
           });
         },
+      },
+      // Ảnh tĩnh lưu trong wwwroot/uploads của Backend_ThucTap
+      "/uploads": {
+        target: "http://localhost:5001",
+        changeOrigin: true,
+        secure: false,
       },
     },
   },

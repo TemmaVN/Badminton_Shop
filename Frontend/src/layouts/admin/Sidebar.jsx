@@ -29,6 +29,7 @@ const menuItems = [
       { id: "san-pham", label: "Sản phẩm", path: "product" },
       { id: "danh-muc-sp", label: "Danh mục sản phẩm", path: "categories" },
       { id: "thuong-hieu", label: "Thương hiệu", path: "brands" },
+      { id: "ton-kho", label: "Kho & Tồn kho", path: "inventory" },
     ],
   },
   {
@@ -38,6 +39,8 @@ const menuItems = [
     path: "sales-overview",
     submenu: [
       { id: "don-hang",  label: "Đơn hàng",  path: "orders"   },
+      { id: "tra-hang",  label: "Trả hàng",  path: "returns"  },
+      { id: "danh-gia",  label: "Đánh giá",  path: "reviews"  },
       { id: "bao-hanh",  label: "Bảo hành",  path: "warranty", icon: ShieldCheck },
       { id: "thanh-toan", label: "Thanh toán", path: "payment" },
       { id: "voucher", label: "Voucher", path: "vouchers" },

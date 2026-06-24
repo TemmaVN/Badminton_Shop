@@ -4,7 +4,7 @@ import Button from '../components/Button';
 import { useMediaQuery } from '../mystate/useMediaQuery';
 import Information from '../components/Information';
 import ChangePass from '../components/ChangePassword';
-import MyOrders from './MyOrder';
+import MyOrders from './MyOrders';
 import { useAuth } from '../contexts/AuthContext';
 
 const UserInfo = () => {

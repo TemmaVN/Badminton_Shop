@@ -1,248 +1,258 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Edit2, Trash2, Plus, Search, X, Save, Loader2, RotateCcw, AlertCircle, Eye, Images, ArrowUp, ArrowDown, Star, StarOff, ZoomIn, ArrowLeft, ArrowRight, Import } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BiExport } from 'react-icons/bi';
+import { useProduct } from '../../contexts/ProductContext';
+import { useCategory } from '../../contexts/CategoryContext';
+import { brandApi, productApi } from '../../api';
 
-// ── Dữ liệu mẫu cố định ──────────────────────────────────────────────────────
-
-const MOCK_BRANDS = [
-  { brandId: 1, brandName: "Yonex",    slug: "yonex"    },
-  { brandId: 2, brandName: "Victor",   slug: "victor"   },
-  { brandId: 3, brandName: "Li-Ning",  slug: "lining"   },
-  { brandId: 4, brandName: "Kawasaki", slug: "kawasaki" },
-  { brandId: 5, brandName: "Apacs",    slug: "apacs"    },
-];
-
-const MOCK_CATEGORIES = [
-  { categoryId: 1, categoryName: "Vợt Cầu Lông",  slug: "vot-cau-long"  },
-  { categoryId: 2, categoryName: "Giày Cầu Lông",  slug: "giay-cau-long" },
-  { categoryId: 3, categoryName: "Bao Vợt & Balo", slug: "bao-vot-balo"  },
-  { categoryId: 4, categoryName: "Cầu & Phụ Kiện", slug: "cau-phu-kien"  },
-  { categoryId: 5, categoryName: "Áo Cầu Lông",    slug: "ao-cau-long"   },
-];
-
-const MOCK_PRODUCTS = [
-  { productId: 1,  productName: "Vợt Cầu Lông Yonex Astrox 88D Pro",       brandId: 1, brandName: "Yonex",    categoryId: 1, categoryName: "Vợt Cầu Lông",  brandSlug: "yonex",    categorySlug: "vot-cau-long",  basePrice: 4500000, discountPrice: 3990000, mainImageUrl: "https://picsum.photos/seed/racket1/400/400",  slug: "yonex-astrox-88d-pro",         variantsCount: 3, totalStock: 12, soldQuantity: 45 },
-  { productId: 2,  productName: "Vợt Cầu Lông Victor Thruster K 9900",      brandId: 2, brandName: "Victor",   categoryId: 1, categoryName: "Vợt Cầu Lông",  brandSlug: "victor",   categorySlug: "vot-cau-long",  basePrice: 3800000, discountPrice: null,    mainImageUrl: "https://picsum.photos/seed/racket2/400/400",  slug: "victor-thruster-k-9900",       variantsCount: 2, totalStock: 8,  soldQuantity: 23 },
-  { productId: 3,  productName: "Vợt Cầu Lông Li-Ning Turbo Charging 20",   brandId: 3, brandName: "Li-Ning",  categoryId: 1, categoryName: "Vợt Cầu Lông",  brandSlug: "lining",   categorySlug: "vot-cau-long",  basePrice: 5200000, discountPrice: 4680000, mainImageUrl: "https://picsum.photos/seed/racket3/400/400",  slug: "lining-turbo-charging-20",     variantsCount: 2, totalStock: 5,  soldQuantity: 18 },
-  { productId: 4,  productName: "Vợt Cầu Lông Yonex Nanoflare 800",         brandId: 1, brandName: "Yonex",    categoryId: 1, categoryName: "Vợt Cầu Lông",  brandSlug: "yonex",    categorySlug: "vot-cau-long",  basePrice: 6000000, discountPrice: 5400000, mainImageUrl: "https://picsum.photos/seed/racket4/400/400",  slug: "yonex-nanoflare-800",          variantsCount: 4, totalStock: 7,  soldQuantity: 31 },
-  { productId: 5,  productName: "Vợt Cầu Lông Victor Brave Sword 12",       brandId: 2, brandName: "Victor",   categoryId: 1, categoryName: "Vợt Cầu Lông",  brandSlug: "victor",   categorySlug: "vot-cau-long",  basePrice: 2900000, discountPrice: 2610000, mainImageUrl: "https://picsum.photos/seed/racket5/400/400",  slug: "victor-brave-sword-12",        variantsCount: 2, totalStock: 15, soldQuantity: 12 },
-  { productId: 6,  productName: "Vợt Cầu Lông Kawasaki Master 6600",        brandId: 4, brandName: "Kawasaki", categoryId: 1, categoryName: "Vợt Cầu Lông",  brandSlug: "kawasaki", categorySlug: "vot-cau-long",  basePrice: 1800000, discountPrice: 1620000, mainImageUrl: "https://picsum.photos/seed/racket6/400/400",  slug: "kawasaki-master-6600",         variantsCount: 2, totalStock: 3,  soldQuantity: 8  },
-  { productId: 7,  productName: "Vợt Cầu Lông Yonex Astrox 100ZZ",         brandId: 1, brandName: "Yonex",    categoryId: 1, categoryName: "Vợt Cầu Lông",  brandSlug: "yonex",    categorySlug: "vot-cau-long",  basePrice: 7200000, discountPrice: 6480000, mainImageUrl: "https://picsum.photos/seed/racket7/400/400",  slug: "yonex-astrox-100zz",           variantsCount: 3, totalStock: 4,  soldQuantity: 67 },
-  { productId: 8,  productName: "Vợt Cầu Lông Victor Thruster Ryuga II",    brandId: 2, brandName: "Victor",   categoryId: 1, categoryName: "Vợt Cầu Lông",  brandSlug: "victor",   categorySlug: "vot-cau-long",  basePrice: 4200000, discountPrice: 3780000, mainImageUrl: "https://picsum.photos/seed/racket8/400/400",  slug: "victor-thruster-ryuga-ii",     variantsCount: 2, totalStock: 10, soldQuantity: 19 },
-  { productId: 9,  productName: "Giày Cầu Lông Yonex Power Cushion 65Z3",   brandId: 1, brandName: "Yonex",    categoryId: 2, categoryName: "Giày Cầu Lông",  brandSlug: "yonex",    categorySlug: "giay-cau-long", basePrice: 3200000, discountPrice: 2880000, mainImageUrl: "https://picsum.photos/seed/shoe1/400/400",    slug: "yonex-power-cushion-65z3",     variantsCount: 5, totalStock: 20, soldQuantity: 55 },
-  { productId: 10, productName: "Giày Cầu Lông Victor A780 III",            brandId: 2, brandName: "Victor",   categoryId: 2, categoryName: "Giày Cầu Lông",  brandSlug: "victor",   categorySlug: "giay-cau-long", basePrice: 2600000, discountPrice: 2340000, mainImageUrl: "https://picsum.photos/seed/shoe2/400/400",    slug: "victor-a780-iii",              variantsCount: 4, totalStock: 14, soldQuantity: 28 },
-  { productId: 11, productName: "Giày Cầu Lông Li-Ning Ranger TD",          brandId: 3, brandName: "Li-Ning",  categoryId: 2, categoryName: "Giày Cầu Lông",  brandSlug: "lining",   categorySlug: "giay-cau-long", basePrice: 2200000, discountPrice: 1980000, mainImageUrl: "https://picsum.photos/seed/shoe3/400/400",    slug: "lining-ranger-td",             variantsCount: 4, totalStock: 9,  soldQuantity: 22 },
-  { productId: 12, productName: "Giày Cầu Lông Kawasaki K-063",             brandId: 4, brandName: "Kawasaki", categoryId: 2, categoryName: "Giày Cầu Lông",  brandSlug: "kawasaki", categorySlug: "giay-cau-long", basePrice: 1500000, discountPrice: 1350000, mainImageUrl: "https://picsum.photos/seed/shoe4/400/400",    slug: "kawasaki-k063",                variantsCount: 3, totalStock: 18, soldQuantity: 11 },
-  { productId: 13, productName: "Giày Cầu Lông Yonex SHB 65X2",            brandId: 1, brandName: "Yonex",    categoryId: 2, categoryName: "Giày Cầu Lông",  brandSlug: "yonex",    categorySlug: "giay-cau-long", basePrice: 2800000, discountPrice: null,    mainImageUrl: "https://picsum.photos/seed/shoe5/400/400",    slug: "yonex-shb-65x2",               variantsCount: 5, totalStock: 6,  soldQuantity: 14 },
-  { productId: 14, productName: "Giày Cầu Lông Victor SH-A960",             brandId: 2, brandName: "Victor",   categoryId: 2, categoryName: "Giày Cầu Lông",  brandSlug: "victor",   categorySlug: "giay-cau-long", basePrice: 3500000, discountPrice: 2975000, mainImageUrl: "https://picsum.photos/seed/shoe6/400/400",    slug: "victor-sh-a960",               variantsCount: 4, totalStock: 11, soldQuantity: 38 },
-  { productId: 15, productName: "Balo Cầu Lông Yonex BA92229 6 in 1",       brandId: 1, brandName: "Yonex",    categoryId: 3, categoryName: "Bao Vợt & Balo", brandSlug: "yonex",    categorySlug: "bao-vot-balo",  basePrice: 1800000, discountPrice: 1530000, mainImageUrl: "https://picsum.photos/seed/bag1/400/400",     slug: "yonex-ba92229-6in1",           variantsCount: 2, totalStock: 25, soldQuantity: 41 },
-  { productId: 16, productName: "Túi Đựng Vợt Victor BR9611 3 in 1",        brandId: 2, brandName: "Victor",   categoryId: 3, categoryName: "Bao Vợt & Balo", brandSlug: "victor",   categorySlug: "bao-vot-balo",  basePrice:  950000, discountPrice:  855000, mainImageUrl: "https://picsum.photos/seed/bag2/400/400",     slug: "victor-br9611-3in1",           variantsCount: 1, totalStock: 30, soldQuantity: 17 },
-  { productId: 17, productName: "Balo Cầu Lông Li-Ning ABSU392",            brandId: 3, brandName: "Li-Ning",  categoryId: 3, categoryName: "Bao Vợt & Balo", brandSlug: "lining",   categorySlug: "bao-vot-balo",  basePrice: 1200000, discountPrice: 1080000, mainImageUrl: "https://picsum.photos/seed/bag3/400/400",     slug: "lining-absu392",               variantsCount: 2, totalStock: 13, soldQuantity: 9  },
-  { productId: 18, productName: "Túi Đựng Vợt Kawasaki KBB-8150 2 in 1",   brandId: 4, brandName: "Kawasaki", categoryId: 3, categoryName: "Bao Vợt & Balo", brandSlug: "kawasaki", categorySlug: "bao-vot-balo",  basePrice:  650000, discountPrice: null,    mainImageUrl: "https://picsum.photos/seed/bag4/400/400",     slug: "kawasaki-kbb-8150",            variantsCount: 1, totalStock: 40, soldQuantity: 6  },
-  { productId: 19, productName: "Balo Cầu Lông Yonex BA92426 12 in 1",      brandId: 1, brandName: "Yonex",    categoryId: 3, categoryName: "Bao Vợt & Balo", brandSlug: "yonex",    categorySlug: "bao-vot-balo",  basePrice: 2500000, discountPrice: 2125000, mainImageUrl: "https://picsum.photos/seed/bag5/400/400",     slug: "yonex-ba92426-12in1",          variantsCount: 2, totalStock: 8,  soldQuantity: 52 },
-  { productId: 20, productName: "Túi Đựng Vợt Victor BR9609 6 in 1",        brandId: 2, brandName: "Victor",   categoryId: 3, categoryName: "Bao Vợt & Balo", brandSlug: "victor",   categorySlug: "bao-vot-balo",  basePrice: 1100000, discountPrice:  990000, mainImageUrl: "https://picsum.photos/seed/bag6/400/400",     slug: "victor-br9609-6in1",           variantsCount: 1, totalStock: 22, soldQuantity: 13 },
-];
-
-let _nextProductId = 21;
-let _nextImageId   = 100;
-
-// ── Helper ────────────────────────────────────────────────────────────────────
-const applyFilters = (list, filters) => {
-  let result = [...list];
-  if (filters.key) {
-    const q = filters.key.toLowerCase();
-    result = result.filter((p) => p.productName.toLowerCase().includes(q));
-  }
-  if (filters.brandSlug)    result = result.filter((p) => p.brandSlug    === filters.brandSlug);
-  if (filters.categorySlug) result = result.filter((p) => p.categorySlug === filters.categorySlug);
-  if (filters.minPrice)     result = result.filter((p) => p.basePrice >= Number(filters.minPrice));
-  if (filters.maxPrice)     result = result.filter((p) => p.basePrice <= Number(filters.maxPrice));
-  return result;
-};
-
-const paginate = (list, page, pageSize) => {
-  const totalCount = list.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-  const start = (page - 1) * pageSize;
-  return {
-    items: list.slice(start, start + pageSize),
-    pagination: { totalCount, totalPages, currentPage: page, pageSize },
-  };
-};
-
-// ── Component ─────────────────────────────────────────────────────────────────
 const ProductList = () => {
   const navigate = useNavigate();
+  const {
+    products,
+    loading,
+    error,
+    pagination,
+    searchProductsAdmin,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    importFromFile,
+    exportFromFile,
+    clearError,
+  } = useProduct();
 
-  // ── Toàn bộ danh sách (không phân trang) dùng ref để tránh re-render thừa
-  const allProductsRef = useRef(MOCK_PRODUCTS.map((p) => ({ ...p })));
+  const { categories } = useCategory();
+  const [brands, setBrands] = useState([]);
 
-  // ── State hiển thị
-  const defaultFilters = { keyword: '', categoryId: '', brandId: '', key: '', categorySlug: '', brandSlug: '', minPrice: '', maxPrice: '', page: 1, pageSize: 10 };
-  const [filters, setFilters]       = useState(defaultFilters);
-  const [products, setProducts]     = useState(() => paginate(MOCK_PRODUCTS, 1, 10).items);
-  const [pagination, setPagination] = useState(() => paginate(MOCK_PRODUCTS, 1, 10).pagination);
-  const [error, setError]           = useState(null);
-  const [brands]                    = useState(MOCK_BRANDS);
-  const [categories]                = useState(MOCK_CATEGORIES);
-
-  // ── Modal thêm/sửa
-  const [isModalOpen, setIsModalOpen]     = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const importFileRef = useRef(null);
 
-  // ── Modal ảnh
+  // ── Image management ──────────────────────────────────────────────────────
   const [imageModalProduct, setImageModalProduct] = useState(null);
-  const [images, setImages]           = useState([]);
-  const [newImageUrl, setNewImageUrl] = useState('');
+  const [images, setImages] = useState([]);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [newImageFile, setNewImageFile] = useState(null);
+  const [newImagePreview, setNewImagePreview] = useState('');
   const [newImageIsMain, setNewImageIsMain] = useState(false);
   const [addingImage, setAddingImage] = useState(false);
   const [savingOrder, setSavingOrder] = useState(false);
   const [orderChanged, setOrderChanged] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const mockImagesRef = useRef({});  // productId → images[]
 
-  // ── Import/export loading
-  const [importLoading, setImportLoading] = useState(false);
-  const [exportLoading, setExportLoading] = useState(false);
-  const importFileRef = useRef(null);
+  // ── Filters (chỉ giữ các bộ lọc backend hỗ trợ: keyword / categoryId / brandId / page) ──
+  const [filters, setFilters] = useState({
+    keyword: '',
+    categoryId: '',
+    brandId: '',
+    page: 1,
+    pageSize: 10,
+  });
 
-  const defaultForm = { productName: '', brandId: '', categoryId: '', basePrice: '', discountPrice: '', mainImageUrl: '', description: '' };
+  const defaultForm = {
+    productName: '',
+    brandId: '',
+    categoryId: '',
+    basePrice: '',
+    discountPrice: '',
+    mainImageUrl: '',
+    description: '',
+  };
   const [formData, setFormData] = useState(defaultForm);
 
-  // ── Search / filter ───────────────────────────────────────────────────────
-  const refreshList = (f = filters) => {
-    const filtered = applyFilters(allProductsRef.current, f);
-    const { items, pagination: pg } = paginate(filtered, f.page, f.pageSize || 10);
-    setProducts(items);
-    setPagination(pg);
-  };
+  useEffect(() => {
+    const fetchBrands = async () => {
+      try {
+        const res = await brandApi.getAll();
+        setBrands(res.data?.data ?? res.data ?? []);
+      } catch (err) {
+        alert(err.response?.data?.message ?? 'Không tải được danh sách thương hiệu');
+      }
+    };
+    fetchBrands();
+  }, []);
+
+  // ── Tìm kiếm admin: keyword / categoryId / brandId / page ──────────────────
+  useEffect(() => {
+    searchProductsAdmin(filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    const next = { ...filters, [name]: value, page: 1 };
-    setFilters(next);
-    refreshList(next);
+    setFilters((prev) => ({ ...prev, [name]: value, page: 1 }));
   };
 
   const resetFilters = () => {
-    setFilters(defaultFilters);
-    refreshList(defaultFilters);
+    setFilters({ keyword: '', categoryId: '', brandId: '', page: 1, pageSize: 10 });
   };
 
   const handlePageChange = (newPage) => {
-    if (newPage < 1 || newPage > pagination.totalPages) return;
-    const next = { ...filters, page: newPage };
-    setFilters(next);
-    refreshList(next);
+    if (newPage >= 1 && newPage <= (pagination?.totalPages || 1)) {
+      setFilters((prev) => ({ ...prev, page: newPage }));
+    }
   };
 
-  // ── Modal mở/đóng ────────────────────────────────────────────────────────
-  const openCreate = () => { setEditingProduct(null); setFormData(defaultForm); setError(null); setIsModalOpen(true); };
-  const openEdit   = (product) => {
-    setEditingProduct(product);
-    setFormData({
-      productName:   product.productName  ?? '',
-      brandId:       product.brandId      ?? '',
-      categoryId:    product.categoryId   ?? '',
-      basePrice:     product.basePrice    ?? '',
-      discountPrice: product.discountPrice ?? '',
-      mainImageUrl:  product.mainImageUrl  ?? '',
-      description:   product.description  ?? '',
-    });
-    setError(null);
+  // ── Modal mở/đóng ──────────────────────────────────────────────────────────
+  const openCreate = () => {
+    setEditingProduct(null);
+    setFormData(defaultForm);
+    clearError();
     setIsModalOpen(true);
   };
-  const closeModal = () => { setIsModalOpen(false); setEditingProduct(null); setError(null); };
 
-  // ── Thêm / Sửa sản phẩm ──────────────────────────────────────────────────
+  const openEdit = (product) => {
+    setEditingProduct(product);
+    const brand = brands.find((b) => b.brandName === product.brandName);
+    const category = categories.find((c) => c.categoryName === product.categoryName);
+    setFormData({
+      productName: product.productName ?? '',
+      brandId: brand?.brandId ?? product.brandId ?? '',
+      categoryId: category?.categoryId ?? product.categoryId ?? '',
+      basePrice: product.basePrice ?? '',
+      discountPrice: product.discountPrice ?? '',
+      mainImageUrl: product.mainImageUrl ?? '',
+      description: product.description ?? '',
+    });
+    clearError();
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingProduct(null);
+    clearError();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.productName.trim()) return;
-    if (!formData.categoryId || !formData.brandId) { alert('Vui lòng chọn danh mục và thương hiệu!'); return; }
-    if (!formData.basePrice || Number(formData.basePrice) <= 0) { alert('Giá gốc phải lớn hơn 0!'); return; }
-    if (formData.discountPrice && Number(formData.discountPrice) >= Number(formData.basePrice)) { alert('Giá khuyến mãi phải nhỏ hơn giá gốc!'); return; }
-
-    const brand    = MOCK_BRANDS.find((b) => b.brandId    === parseInt(formData.brandId));
-    const category = MOCK_CATEGORIES.find((c) => c.categoryId === parseInt(formData.categoryId));
-
-    setSubmitLoading(true);
-    await new Promise((r) => setTimeout(r, 200));
-
-    if (editingProduct) {
-      allProductsRef.current = allProductsRef.current.map((p) =>
-        p.productId === editingProduct.productId
-          ? { ...p, productName: formData.productName.trim(), brandId: parseInt(formData.brandId), brandName: brand?.brandName ?? '', brandSlug: brand?.slug ?? '', categoryId: parseInt(formData.categoryId), categoryName: category?.categoryName ?? '', categorySlug: category?.slug ?? '', basePrice: parseFloat(formData.basePrice), discountPrice: formData.discountPrice ? parseFloat(formData.discountPrice) : null, mainImageUrl: formData.mainImageUrl?.trim() || null }
-          : p
-      );
-    } else {
-      const newProduct = {
-        productId:    _nextProductId++,
-        productName:  formData.productName.trim(),
-        brandId:      parseInt(formData.brandId),
-        brandName:    brand?.brandName    ?? '',
-        brandSlug:    brand?.slug         ?? '',
-        categoryId:   parseInt(formData.categoryId),
-        categoryName: category?.categoryName ?? '',
-        categorySlug: category?.slug         ?? '',
-        basePrice:    parseFloat(formData.basePrice),
-        discountPrice: formData.discountPrice ? parseFloat(formData.discountPrice) : null,
-        mainImageUrl: formData.mainImageUrl?.trim() || null,
-        slug:         formData.productName.trim().toLowerCase().replace(/\s+/g, '-'),
-        variantsCount: 0, totalStock: 0, soldQuantity: 0,
-      };
-      allProductsRef.current = [newProduct, ...allProductsRef.current];
+    if (!formData.categoryId || !formData.brandId) {
+      alert('Vui lòng chọn danh mục và thương hiệu!');
+      return;
+    }
+    if (!formData.basePrice || Number(formData.basePrice) <= 0) {
+      alert('Giá gốc phải lớn hơn 0!');
+      return;
+    }
+    if (formData.discountPrice && Number(formData.discountPrice) >= Number(formData.basePrice)) {
+      alert('Giá khuyến mãi phải nhỏ hơn giá gốc!');
+      return;
     }
 
-    setSubmitLoading(false);
-    closeModal();
-    refreshList();
+    const payload = {
+      productName: formData.productName.trim(),
+      brandId: parseInt(formData.brandId),
+      categoryId: parseInt(formData.categoryId),
+      basePrice: parseFloat(formData.basePrice),
+      discountPrice: formData.discountPrice ? parseFloat(formData.discountPrice) : null,
+      mainImageUrl: formData.mainImageUrl?.trim() || null,
+      description: formData.description?.trim() || null,
+    };
+
+    setSubmitLoading(true);
+    try {
+      const result = editingProduct
+        ? await updateProduct(editingProduct.productId, payload)
+        : await addProduct(payload);
+
+      if (result !== null) {
+        closeModal();
+        searchProductsAdmin(filters);
+      }
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
-  // ── Xóa sản phẩm ─────────────────────────────────────────────────────────
-  const handleDelete = (e, id, name) => {
+  const handleDelete = async (e, id, name) => {
     e.stopPropagation();
-    if (!window.confirm(`Xóa "${name}"?\n\nThao tác sẽ xóa tất cả biến thể và ảnh liên quan.`)) return;
-    allProductsRef.current = allProductsRef.current.filter((p) => p.productId !== id);
-    refreshList();
+    if (!window.confirm(`Xóa "${name}"?\n\nThao tác sẽ xóa tất cả biến thể và ảnh liên quan (CASCADE).`)) return;
+    const ok = await deleteProduct(id);
+    if (!ok) {
+      alert('Không thể xóa. Sản phẩm có thể đã tồn tại trong đơn hàng.');
+    } else {
+      searchProductsAdmin(filters);
+    }
   };
 
-  // ── Quản lý ảnh ──────────────────────────────────────────────────────────
-  const openImageModal = (e, product) => {
+  // ── Quản lý ảnh ────────────────────────────────────────────────────────────
+  const openImageModal = async (e, product) => {
     e.stopPropagation();
     setImageModalProduct(product);
-    setNewImageUrl(''); setNewImageIsMain(false); setOrderChanged(false); setPreviewImage(null);
-    setImages((mockImagesRef.current[product.productId] ?? []).map((i) => ({ ...i })));
+    setNewImageFile(null);
+    setNewImagePreview('');
+    setNewImageIsMain(false);
+    setOrderChanged(false);
+    setPreviewImage(null);
+    setImageLoading(true);
+    try {
+      const res = await productApi.getImages(product.productId);
+      setImages((res.data?.data ?? res.data ?? []).sort((a, b) => a.displayOrder - b.displayOrder));
+    } catch {
+      setImages([]);
+    } finally {
+      setImageLoading(false);
+    }
   };
-  const closeImageModal = () => { setImageModalProduct(null); setImages([]); setOrderChanged(false); setPreviewImage(null); };
+
+  const closeImageModal = () => {
+    setImageModalProduct(null);
+    setImages([]);
+    setOrderChanged(false);
+    setPreviewImage(null);
+  };
+
+  const handleNewImageFile = (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    if (newImagePreview) URL.revokeObjectURL(newImagePreview);
+    setNewImageFile(file);
+    setNewImagePreview(URL.createObjectURL(file));
+  };
 
   const handleAddImage = async () => {
-    if (!newImageUrl.trim()) return;
+    if (!newImageFile) return;
     setAddingImage(true);
-    await new Promise((r) => setTimeout(r, 150));
-    const pid = imageModalProduct.productId;
-    if (!mockImagesRef.current[pid]) mockImagesRef.current[pid] = [];
-    const imgs = mockImagesRef.current[pid];
-    if (newImageIsMain) imgs.forEach((i) => (i.isMain = false));
-    imgs.push({ imageId: _nextImageId++, imageUrl: newImageUrl.trim(), isMain: !!newImageIsMain, displayOrder: imgs.length + 1 });
-    setImages(imgs.map((i) => ({ ...i })));
-    setNewImageUrl(''); setNewImageIsMain(false);
-    setAddingImage(false);
+    try {
+      await productApi.addImage(imageModalProduct.productId, newImageFile, newImageIsMain);
+      const res = await productApi.getImages(imageModalProduct.productId);
+      setImages((res.data?.data ?? res.data ?? []).sort((a, b) => a.displayOrder - b.displayOrder));
+      if (newImagePreview) URL.revokeObjectURL(newImagePreview);
+      setNewImageFile(null);
+      setNewImagePreview('');
+      setNewImageIsMain(false);
+      searchProductsAdmin(filters);
+    } catch (err) {
+      alert(err.response?.data?.message ?? 'Thêm ảnh thất bại');
+    } finally {
+      setAddingImage(false);
+    }
   };
 
   const handleSetMain = async (imageId) => {
-    const pid = imageModalProduct.productId;
-    (mockImagesRef.current[pid] ?? []).forEach((i) => { i.isMain = i.imageId === imageId; });
-    setImages((mockImagesRef.current[pid] ?? []).map((i) => ({ ...i })));
+    try {
+      await productApi.setMainImage(imageModalProduct.productId, imageId);
+      const res = await productApi.getImages(imageModalProduct.productId);
+      setImages((res.data?.data ?? res.data ?? []).sort((a, b) => a.displayOrder - b.displayOrder));
+      searchProductsAdmin(filters);
+    } catch (err) {
+      alert(err.response?.data?.message ?? 'Thao tác thất bại');
+    }
   };
 
-  const handleDeleteImage = (imageId, isMain) => {
+  const handleDeleteImage = async (imageId, isMain) => {
     if (isMain) { alert('Không thể xóa ảnh đại diện. Hãy đặt ảnh khác làm đại diện trước.'); return; }
     if (!window.confirm('Xóa ảnh này?')) return;
-    const pid = imageModalProduct.productId;
-    mockImagesRef.current[pid] = (mockImagesRef.current[pid] ?? []).filter((i) => i.imageId !== imageId);
-    setImages((mockImagesRef.current[pid] ?? []).map((i) => ({ ...i })));
+    try {
+      await productApi.deleteImage(imageId);
+      setImages((prev) => prev.filter((i) => i.imageId !== imageId));
+    } catch (err) {
+      alert(err.response?.data?.message ?? 'Xóa ảnh thất bại');
+    }
   };
 
   const handleMoveImage = (index, dir) => {
@@ -257,39 +267,58 @@ const ProductList = () => {
 
   const handleSaveOrder = async () => {
     setSavingOrder(true);
-    await new Promise((r) => setTimeout(r, 200));
-    const pid = imageModalProduct.productId;
-    mockImagesRef.current[pid] = images.map((i) => ({ ...i }));
-    setOrderChanged(false);
-    setSavingOrder(false);
+    try {
+      const payload = images.map((img) => ({ imageId: img.imageId, displayOrder: img.displayOrder }));
+      await productApi.reorderImages(imageModalProduct.productId, payload);
+      setOrderChanged(false);
+      searchProductsAdmin(filters);
+    } catch (err) {
+      alert(err.response?.data?.message ?? 'Lưu thứ tự thất bại');
+    } finally {
+      setSavingOrder(false);
+    }
   };
 
-  // ── Import / Export ───────────────────────────────────────────────────────
+  // ── Import / Export ─────────────────────────────────────────────────────────
   const handleImportFromFile = async (e) => {
     const f = e.target.files?.[0];
     e.target.value = '';
     if (!f) return;
-    if (!f.name.toLowerCase().endsWith('.xlsx')) { alert('⚠️ Chỉ chấp nhận file .xlsx'); return; }
+    if (!f.name.toLowerCase().endsWith('.xlsx')) {
+      alert('⚠️ Chỉ chấp nhận file .xlsx');
+      return;
+    }
     setImportLoading(true);
-    await new Promise((r) => setTimeout(r, 500));
-    setImportLoading(false);
-    alert('Nhập dữ liệu mẫu thành công! (chế độ demo — chưa có backend)');
+    try {
+      const res = await importFromFile(f);
+      if (res?.success) {
+        alert(res.message || 'Nhập sản phẩm thành công!');
+        searchProductsAdmin(filters);
+      } else {
+        alert('Nhập thất bại: ' + (res?.message || 'Lỗi không xác định'));
+      }
+    } finally {
+      setImportLoading(false);
+    }
   };
 
   const handleExportFile = async () => {
     setExportLoading(true);
-    await new Promise((r) => setTimeout(r, 300));
-    const header = 'productId,productName,brandName,categoryName,basePrice,discountPrice,totalStock,soldQuantity';
-    const rows   = allProductsRef.current.map((p) =>
-      `${p.productId},"${p.productName}","${p.brandName}","${p.categoryName}",${p.basePrice},${p.discountPrice ?? ''},${p.totalStock},${p.soldQuantity}`
-    );
-    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = 'products-export.csv';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setExportLoading(false);
+    try {
+      const result = await exportFromFile();
+      if (result) {
+        const url = URL.createObjectURL(result.blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = result.fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -299,9 +328,8 @@ const ProductList = () => {
     if (qty <= 5) return 'text-amber-500 font-bold';
     return 'text-emerald-500 font-bold';
   };
-  const formatPrice = (price) => price ? price.toLocaleString('vi-VN') + ' ₫' : '—';
+  const formatPrice = (price) => (price ? price.toLocaleString('vi-VN') + ' ₫' : '—');
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="p-6 bg-slate-50 dark:bg-slate-950 min-h-screen">
       <div className="mx-auto bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
@@ -329,23 +357,19 @@ const ProductList = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="relative lg:col-span-2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-              <input name="key" value={filters.key} onChange={handleFilterChange} placeholder="Tìm tên sản phẩm..." className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-500 dark:focus:border-orange-400 focus:bg-white dark:focus:bg-slate-800 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none transition-all" />
+              <input name="keyword" value={filters.keyword} onChange={handleFilterChange} placeholder="Tìm tên sản phẩm..." className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-500 dark:focus:border-orange-400 focus:bg-white dark:focus:bg-slate-800 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none transition-all" />
             </div>
-            <select name="brandSlug" value={filters.brandSlug} onChange={handleFilterChange} className="py-2 px-3 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-500 rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all">
+            <select name="brandId" value={filters.brandId} onChange={handleFilterChange} className="py-2 px-3 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-500 rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all">
               <option value="">Tất cả thương hiệu</option>
-              {brands.map((b) => <option key={b.brandId} value={b.slug}>{b.brandName}</option>)}
+              {brands.map((b) => <option key={b.brandId} value={b.brandId}>{b.brandName}</option>)}
             </select>
-            <select name="categorySlug" value={filters.categorySlug} onChange={handleFilterChange} className="py-2 px-3 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-500 rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all">
+            <select name="categoryId" value={filters.categoryId} onChange={handleFilterChange} className="py-2 px-3 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-500 rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all">
               <option value="">Tất cả danh mục</option>
-              {categories.map((cat) => <option key={cat.categoryId} value={cat.slug}>{cat.categoryName}</option>)}
+              {categories.map((cat) => <option key={cat.categoryId} value={cat.categoryId}>{cat.categoryName}</option>)}
             </select>
-            <div className="flex gap-2">
-              <input name="minPrice" type="number" value={filters.minPrice} onChange={handleFilterChange} placeholder="Giá từ..." className="w-full py-2 px-3 bg-slate-100 border border-transparent focus:border-orange-500 focus:bg-white rounded-xl text-sm outline-none transition-all" />
-              <input name="maxPrice" type="number" value={filters.maxPrice} onChange={handleFilterChange} placeholder="đến..." className="w-full py-2 px-3 bg-slate-100 border border-transparent focus:border-orange-500 focus:bg-white rounded-xl text-sm outline-none transition-all" />
-            </div>
             <button onClick={resetFilters} className="flex items-center justify-center gap-2 py-2 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-medium transition-all">
               <RotateCcw size={14} /> Làm mới
             </button>
@@ -353,6 +377,11 @@ const ProductList = () => {
 
           {/* ── Table ── */}
           <div className="overflow-x-auto relative mt-4" style={{ minHeight: 300 }}>
+            {loading && (
+              <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 flex items-center justify-center z-10">
+                <Loader2 className="animate-spin text-orange-500" size={28} />
+              </div>
+            )}
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide border-b border-slate-200 dark:border-slate-700">
@@ -368,7 +397,7 @@ const ProductList = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-                {products.length === 0 ? (
+                {products.length === 0 && !loading ? (
                   <tr>
                     <td colSpan={9} className="py-16 text-center text-slate-400 dark:text-slate-500 text-sm">
                       <div className="flex flex-col items-center gap-2">
@@ -394,18 +423,18 @@ const ProductList = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        {item.brandName ? <span className="inline-block px-2.5 py-0.5 rounded-lg bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 text-xs font-medium border border-orange-200 dark:border-orange-500/30">{item.brandName}</span> : <span className="text-slate-400 text-xs">—</span>}
+                        {item.brandName ? <span className="inline-block px-2.5 py-0.5 rounded-lg bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 text-xs font-medium border border-orange-200 dark:border-orange-500/30">{item.brandName}</span> : <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>}
                       </td>
                       <td className="px-4 py-3">
-                        {item.categoryName ? <span className="inline-block px-2.5 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-medium border border-blue-100 dark:border-blue-500/30">{item.categoryName}</span> : <span className="text-slate-400 text-xs">—</span>}
+                        {item.categoryName ? <span className="inline-block px-2.5 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-medium border border-blue-100 dark:border-blue-500/30">{item.categoryName}</span> : <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>}
                       </td>
                       <td className="px-4 py-3 text-right"><span className="text-slate-600 dark:text-slate-300 text-sm">{formatPrice(item.basePrice)}</span></td>
                       <td className="px-4 py-3 text-right">
-                        {item.discountPrice ? <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-sm">{formatPrice(item.discountPrice)}</span> : <span className="text-slate-400 text-xs">—</span>}
+                        {item.discountPrice ? <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-sm">{formatPrice(item.discountPrice)}</span> : <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>}
                       </td>
-                      <td className="px-4 py-3 text-center"><span className="text-slate-700 dark:text-slate-300 font-medium">{item.variantsCount ?? '—'}</span></td>
-                      <td className="px-4 py-3 text-center"><span className={stockColor(item.totalStock)}>{item.totalStock ?? '—'}</span></td>
-                      <td className="px-4 py-3 text-center"><span className="text-slate-600 dark:text-slate-300 font-medium">{item.soldQuantity ?? 0}</span></td>
+                      <td className="px-4 py-3 text-center"><span className="text-slate-700 dark:text-slate-300 font-medium">{item.variantsCount ?? item.variantCount ?? '—'}</span></td>
+                      <td className="px-4 py-3 text-center"><span className={stockColor(item.totalStock ?? item.stockQuantity)}>{item.totalStock ?? item.stockQuantity ?? '—'}</span></td>
+                      <td className="px-4 py-3 text-center"><span className="text-slate-600 dark:text-slate-300 font-medium">{item.soldQuantity ?? item.totalSold ?? 0}</span></td>
                       <td className="px-4 py-3">
                         <div className="flex justify-center items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={(e) => { e.stopPropagation(); navigate(`/admin/product/${item.productId}`, { state: { product: item } }); }} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg transition-colors" title="Xem"><Eye size={15} /></button>
@@ -518,18 +547,42 @@ const ProductList = () => {
               </div>
               <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">Thêm ảnh mới</p>
-                <div className="flex gap-2">
-                  <input value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddImage()} placeholder="Dán URL ảnh vào đây..." className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500 placeholder:text-slate-400" />
-                  <label className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 cursor-pointer select-none whitespace-nowrap">
-                    <input type="checkbox" checked={newImageIsMain} onChange={(e) => setNewImageIsMain(e.target.checked)} className="accent-orange-500 w-4 h-4" /> Ảnh chính
+                <div
+                  className={`relative border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors ${newImageFile ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/10' : 'border-slate-300 dark:border-slate-600 hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-orange-900/10'}`}
+                  onClick={() => document.getElementById('img-upload-input').click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); handleNewImageFile(e.dataTransfer.files[0]); }}
+                >
+                  <input id="img-upload-input" type="file" accept="image/*" className="hidden" onChange={(e) => handleNewImageFile(e.target.files[0])} />
+                  {newImagePreview ? (
+                    <div className="flex items-center gap-3">
+                      <img src={newImagePreview} alt="preview" className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+                      <div className="text-left flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{newImageFile?.name}</p>
+                        <p className="text-xs text-slate-400">{newImageFile ? (newImageFile.size / 1024).toFixed(0) + ' KB' : ''}</p>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); URL.revokeObjectURL(newImagePreview); setNewImageFile(null); setNewImagePreview(''); }} className="text-slate-400 hover:text-red-500 p-1 flex-shrink-0"><X size={14} /></button>
+                    </div>
+                  ) : (
+                    <div className="py-2">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Kéo ảnh vào đây hoặc <span className="text-orange-500 font-medium">chọn file</span></p>
+                      <p className="text-xs text-slate-400 mt-0.5">JPG, PNG, WEBP...</p>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <label className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+                    <input type="checkbox" checked={newImageIsMain} onChange={(e) => setNewImageIsMain(e.target.checked)} className="accent-orange-500 w-4 h-4" /> Đặt làm ảnh chính
                   </label>
-                  <button onClick={handleAddImage} disabled={addingImage || !newImageUrl.trim()} className="flex items-center gap-1.5 px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-semibold hover:bg-orange-600 disabled:opacity-50 transition-colors">
-                    {addingImage ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Thêm
+                  <button onClick={handleAddImage} disabled={addingImage || !newImageFile} className="flex items-center gap-1.5 px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-semibold hover:bg-orange-600 disabled:opacity-50 transition-colors">
+                    {addingImage ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Thêm ảnh
                   </button>
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto px-6 py-4">
-                {images.length === 0 ? (
+                {imageLoading ? (
+                  <div className="flex justify-center py-10"><Loader2 className="animate-spin text-slate-400" size={24} /></div>
+                ) : images.length === 0 ? (
                   <div className="text-center py-10 text-slate-400 text-sm">Chưa có ảnh nào.</div>
                 ) : (
                   <div className="space-y-2">
