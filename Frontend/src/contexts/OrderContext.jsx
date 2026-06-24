@@ -11,9 +11,9 @@ export const useOrder = () => {
 };
 
 export const OrderProvider = ({ children }) => {
-  const [orders, setOrders]       = useState([]);  // admin: all orders
-  const [myOrders, setMyOrders]   = useState([]);  // customer: own orders
-  const [loading, setLoading]     = useState(false);
+  const [orders, setOrders] = useState([]); // admin: all orders
+  const [myOrders, setMyOrders] = useState([]); // customer: own orders
+  const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     totalCount: 0,
     totalPages: 0,
@@ -81,7 +81,10 @@ export const OrderProvider = ({ children }) => {
       await orderApi.updateStatus(orderId, newStatusId);
       return { success: true };
     } catch (err) {
-      return { success: false, message: err.response?.data?.message ?? err.message };
+      return {
+        success: false,
+        message: err.response?.data?.message ?? err.message,
+      };
     }
   };
 
@@ -106,7 +109,10 @@ export const OrderProvider = ({ children }) => {
       const res = await orderApi.create(payload);
       return { success: true, data: res.data };
     } catch (err) {
-      return { success: false, message: err.response?.data?.message ?? err.message };
+      return {
+        success: false,
+        message: err.response?.data?.message ?? err.message,
+      };
     } finally {
       setLoading(false);
     }
@@ -117,11 +123,16 @@ export const OrderProvider = ({ children }) => {
     try {
       await orderApi.cancelMyOrder(orderId);
       setMyOrders((prev) =>
-        prev.map((o) => (o.orderId === orderId ? { ...o, status: "Đã hủy" } : o))
+        prev.map((o) =>
+          o.orderId === orderId ? { ...o, status: "Đã hủy" } : o,
+        ),
       );
       return { success: true };
     } catch (err) {
-      return { success: false, message: err.response?.data?.message ?? err.message };
+      return {
+        success: false,
+        message: err.response?.data?.message ?? err.message,
+      };
     }
   };
 

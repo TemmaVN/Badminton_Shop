@@ -27,29 +27,37 @@ export const VoucherProvider = ({ children }) => {
 
   const saveVoucher = useCallback(async (voucherId) => {
     await voucherApi.saveVoucher(voucherId);
-    setSavedIds(prev => new Set([...prev, voucherId]));
+    setSavedIds((prev) => new Set([...prev, voucherId]));
   }, []);
 
   // For checkout: POST /Voucher/my-voucher with cart items + payment method
-  const getCheckoutVouchers = useCallback(async (orderDetails, paymentMethod) => {
-    try {
-      const res = await voucherApi.getAvailableVouchers({ orderDetails, paymentMethod });
-      return Array.isArray(res.data) ? res.data : [];
-    } catch {
-      return [];
-    }
-  }, []);
+  const getCheckoutVouchers = useCallback(
+    async (orderDetails, paymentMethod) => {
+      try {
+        const res = await voucherApi.getAvailableVouchers({
+          orderDetails,
+          paymentMethod,
+        });
+        return Array.isArray(res.data) ? res.data : [];
+      } catch {
+        return [];
+      }
+    },
+    [],
+  );
 
   return (
-    <VoucherContext.Provider value={{
-      allVouchers,
-      loading,
-      fetched,
-      savedIds,
-      fetchAllVouchers,
-      saveVoucher,
-      getCheckoutVouchers,
-    }}>
+    <VoucherContext.Provider
+      value={{
+        allVouchers,
+        loading,
+        fetched,
+        savedIds,
+        fetchAllVouchers,
+        saveVoucher,
+        getCheckoutVouchers,
+      }}
+    >
       {children}
     </VoucherContext.Provider>
   );

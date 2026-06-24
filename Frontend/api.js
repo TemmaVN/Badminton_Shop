@@ -88,6 +88,16 @@ export const userApi = {
       detailedAddress,
     }),
   get_info: () => api.get("/User/user-info"),
+  getAll: (page = 1, pageSize = 10) =>
+    api.get("/User", { params: { page, pageSize } }),
+  search: (keyword) => api.get("/User/search", { params: { keyword } }),
+  create: (userData) => api.post("/User", userData),
+  // Admin endpoints
+  setActive: (userId, isActive) =>
+    api.put(`/User/admin/${userId}/active`, { isActive }),
+  getAdminDetail: (userId) => api.get(`/User/admin/${userId}`),
+  getAdminOrderHistory: (userId, params = {}) =>
+    api.get(`/User/admin/${userId}/orders`, { params }),
 };
 
 // Product API
@@ -108,6 +118,11 @@ export const productApi = {
     }),
 
   getProductDetaildBySlug: (slug) => api.get(`/Product/${slug}`),
+
+  getForAdmin: ({ pageSize, ...rest } = {}) =>
+    api.get("/Product/product-management", {
+      params: { ...rest, pagesize: pageSize },
+    }),
 
   getForAdmin: ({ pageSize, ...rest } = {}) =>
     api.get("/Product/product-management", {
@@ -183,7 +198,22 @@ export const productApi = {
 
   exportFromFile: () =>
     api.get(`/Product/admin/export-excel`, { responseType: "blob" }),
+
+  importVariantsExcel: (productId, formData) =>
+    api.post(
+      `/Product/${productId}/management-details/import-excel`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    ),
+
+  exportVariantsExcel: (productId) =>
+    api.get(`/Product/${productId}/management-details/export-excel`, {
+      responseType: "blob",
+    }),
 };
+
 
 export const metaDataApi = {
   get: () => api.get("/MetaData"),
@@ -192,6 +222,7 @@ export const metaDataApi = {
 // Category API
 export const categoryApi = {
   getAll: () => api.get("/Category"),
+  getById: (id) => api.get(`/Category/${id}`),
   create: (categoryName) =>
     api.post("/Category", `"${categoryName}"`, {
       headers: { "Content-Type": "application/json" },
@@ -202,6 +233,9 @@ export const categoryApi = {
     }),
   delete: (id) => api.delete(`/Category/${id}`),
 };
+
+// api.js
+// ... (các config axios cũ giữ nguyên)
 
 export const brandApi = {
   getAll: () => api.get("/Brand"),
@@ -230,6 +264,7 @@ export const cartApi = {
     api.delete(`/Cart/delete-cart-item/${cartItemId}`),
 };
 
+// Order API
 // Order API
 export const orderApi = {
   create: (data) => api.post("/Order", data),
