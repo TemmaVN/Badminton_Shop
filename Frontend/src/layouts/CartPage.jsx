@@ -413,12 +413,19 @@ const CartPage = () => {
                     <span className="text-gray-500 font-medium">Giảm giá</span>
                     <span className="font-bold text-emerald-600">−{Math.round(totalDiscount).toLocaleString()} đ</span>
                   </div>
-                  {preview?.appliedVouchers?.map((av, i) => (
-                    <div key={i} className="flex justify-between text-xs pl-2">
-                      <span className="text-emerald-600 font-mono">{av.voucherCode}</span>
-                      <span className="text-emerald-600">−{Math.round(av.appliedDiscount ?? 0).toLocaleString()}đ</span>
-                    </div>
-                  ))}
+                  {preview?.appliedVouchers?.map((av, i) => {
+                    // preview trả { voucherId, discountValue }; tra mã từ danh sách voucher
+                    const code = av.voucherCode
+                      ?? vouchers.find(v => v.voucherId === av.voucherId)?.voucherCode
+                      ?? `#${av.voucherId}`;
+                    const amount = av.appliedDiscount ?? av.discountValue ?? 0;
+                    return (
+                      <div key={i} className="flex justify-between text-xs pl-2">
+                        <span className="text-emerald-600 font-mono">{code}</span>
+                        <span className="text-emerald-600">−{Math.round(amount).toLocaleString()}đ</span>
+                      </div>
+                    );
+                  })}
                 </>
               )}
             </div>

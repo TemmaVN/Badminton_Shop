@@ -42,7 +42,6 @@ const menuItems = [
       { id: "tra-hang",  label: "Trả hàng",  path: "returns"  },
       { id: "danh-gia",  label: "Đánh giá",  path: "reviews"  },
       { id: "bao-hanh",  label: "Bảo hành",  path: "warranty", icon: ShieldCheck },
-      { id: "thanh-toan", label: "Thanh toán", path: "payment" },
       { id: "voucher", label: "Voucher", path: "vouchers" },
     ],
   },
@@ -65,7 +64,6 @@ const menuItems = [
     label: "Hệ thống",
     submenu: [
       { id: "quan-tri-vien", label: "Quản trị viên", path: "admin-info" },
-      { id: "vai-tro", label: "Vai trò & Quyền hạn", path: "roles" },
     ],
   },
 ];

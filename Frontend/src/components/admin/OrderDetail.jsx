@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { X, Package, CheckCircle, XCircle, Loader2, Clock } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { X, Package, CheckCircle, XCircle, Loader2, Clock, Camera, Plus } from "lucide-react";
 import { useOrder } from "../../contexts/OrderContext";
-import { orderApi } from "../../api";
+import { orderApi, returnApi, productApi } from "../../api";
 
 const STATUS_TIMELINE = [
   { id: 1, text: "Chờ xác nhận" },
@@ -60,6 +60,62 @@ const OrderDetail = ({ order, onClose, onUpdate }) => {
   const [localOrder, setLocalOrder] = useState(order);
 
   const currentStatusId = resolveStatusId(localOrder.status);
+
+  // ── Ảnh minh chứng giao hàng (hiện khi đơn đã giao trở đi) ──────────────
+  const DELIVERED_STATUS_ID = 6;
+  const canManageProof = currentStatusId >= DELIVERED_STATUS_ID && currentStatusId !== CANCEL_STATUS_ID;
+  const [proofs, setProofs] = useState([]);
+  const [showProofForm, setShowProofForm] = useState(false);
+  const [proofUrl, setProofUrl] = useState("");
+  const [proofNote, setProofNote] = useState("");
+  const [proofUploading, setProofUploading] = useState(false);
+  const [proofSubmitting, setProofSubmitting] = useState(false);
+  const [proofError, setProofError] = useState(null);
+
+  const loadProofs = useCallback(async () => {
+    if (!canManageProof) return;
+    try {
+      const res = await returnApi.getDeliveryProofs(localOrder.orderId);
+      setProofs(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setProofs([]);
+    }
+  }, [canManageProof, localOrder.orderId]);
+
+  useEffect(() => { loadProofs(); }, [loadProofs]);
+
+  const handleProofFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProofUploading(true);
+    setProofError(null);
+    try {
+      const res = await productApi.uploadImage(file);
+      const url = res.data?.imageUrl ?? res.data?.data?.imageUrl ?? "";
+      if (url) setProofUrl(url);
+      else setProofError("Không lấy được URL ảnh sau khi tải lên.");
+    } catch (err) {
+      setProofError(err.response?.data?.message ?? err.response?.data?.Message ?? "Tải ảnh thất bại.");
+    } finally {
+      setProofUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleAddProof = async () => {
+    if (!proofUrl.trim()) { setProofError("Vui lòng nhập URL ảnh minh chứng."); return; }
+    setProofSubmitting(true);
+    setProofError(null);
+    try {
+      await returnApi.addDeliveryProof(localOrder.orderId, proofUrl.trim(), proofNote.trim() || null);
+      setProofUrl(""); setProofNote(""); setShowProofForm(false);
+      await loadProofs();
+    } catch (err) {
+      setProofError(err.response?.data?.message ?? err.response?.data?.Message ?? "Thêm ảnh thất bại.");
+    } finally {
+      setProofSubmitting(false);
+    }
+  };
 
   const isCancelled = currentStatusId === CANCEL_STATUS_ID;
   const isCompleted = currentStatusId === 7;
@@ -358,6 +414,79 @@ const OrderDetail = ({ order, onClose, onUpdate }) => {
               </tbody>
             </table>
           </div>
+
+          {/* Card: Ảnh minh chứng giao hàng */}
+          {canManageProof && (
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-5 mt-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300 flex items-center gap-2">
+                  <Camera size={16} /> Ảnh minh chứng giao hàng
+                </h3>
+                {!showProofForm && (
+                  <button
+                    onClick={() => { setShowProofForm(true); setProofError(null); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <Plus size={14} /> Thêm ảnh
+                  </button>
+                )}
+              </div>
+
+              <p className="text-xs text-gray-400 dark:text-slate-500 mb-3">
+                Thêm ảnh đã giao thành công để làm bằng chứng (chặn khách báo "chưa nhận được hàng").
+              </p>
+
+              {proofs.length > 0 ? (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {proofs.map((p) => (
+                    <div key={p.proofId} className="space-y-1">
+                      <a href={p.imageUrl} target="_blank" rel="noreferrer"
+                        className="block w-20 h-20 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden hover:opacity-80 transition-opacity">
+                        <img src={p.imageUrl} alt="" className="w-full h-full object-cover"
+                          onError={(e) => { e.target.style.display = "none"; }} />
+                      </a>
+                      {p.note && <p className="text-xs text-slate-400 max-w-20 truncate">{p.note}</p>}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                !showProofForm && <p className="text-sm text-gray-400 dark:text-slate-500 italic">Chưa có ảnh giao hàng.</p>
+              )}
+
+              {showProofForm && (
+                <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-3">
+                  <div>
+                    <label className="text-xs font-medium text-slate-500 dark:text-slate-400">URL ảnh <span className="text-red-500">*</span></label>
+                    <input type="text" value={proofUrl} onChange={(e) => setProofUrl(e.target.value)} placeholder="https://..."
+                      className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                    <div className="flex items-center gap-2 mt-2">
+                      <label className={`text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${proofUploading ? "opacity-50 pointer-events-none" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"}`}>
+                        {proofUploading ? "Đang tải..." : "Hoặc tải ảnh lên"}
+                        <input type="file" accept="image/*" className="hidden" onChange={handleProofFileUpload} disabled={proofUploading} />
+                      </label>
+                      {proofUrl && <img src={proofUrl} alt="preview" className="w-10 h-10 object-cover rounded-lg" onError={(e) => { e.target.style.display = "none"; }} />}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Ghi chú (tuỳ chọn)</label>
+                    <input type="text" value={proofNote} onChange={(e) => setProofNote(e.target.value)} placeholder="Ảnh giao hàng ngày..."
+                      className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                  </div>
+                  {proofError && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg px-3 py-2">{proofError}</p>}
+                  <div className="flex gap-2">
+                    <button onClick={() => { setShowProofForm(false); setProofError(null); setProofUrl(""); setProofNote(""); }}
+                      className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                      Huỷ
+                    </button>
+                    <button onClick={handleAddProof} disabled={proofSubmitting}
+                      className="px-5 py-2 rounded-xl bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600 disabled:opacity-50 transition-colors">
+                      {proofSubmitting ? "Đang lưu..." : "Thêm ảnh"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer Actions */}

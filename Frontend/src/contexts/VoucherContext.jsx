@@ -34,11 +34,17 @@ export const VoucherProvider = ({ children }) => {
   const getCheckoutVouchers = useCallback(
     async (orderDetails, paymentMethod) => {
       try {
+        // Backend ApplicableVoucherRequest yêu cầu { paymentMethod, orderItems:[{detailId,quantity,unitPrice}] }
         const res = await voucherApi.getAvailableVouchers({
-          orderDetails,
           paymentMethod,
+          orderItems: (orderDetails ?? []).map((it) => ({
+            detailId: it.detailId,
+            quantity: it.quantity,
+            unitPrice: it.unitPrice,
+          })),
         });
-        return Array.isArray(res.data) ? res.data : [];
+        const data = res.data?.data ?? res.data;
+        return Array.isArray(data) ? data : [];
       } catch {
         return [];
       }

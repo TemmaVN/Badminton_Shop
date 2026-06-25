@@ -41,16 +41,16 @@ function Card({ children, className = "" }) {
 function RevenueTab({ period }) {
   const { revenueByMonth } = useStatistic();
   const { isDark } = useTheme();
-  const [monthly2024, setMonthly2024] = useState([]);
+  const [monthly2026, setMonthly2026] = useState([]);
 
   useEffect(() => {
-    statisticApi.getRevenueByMonth({ year: 2024 })
-      .then(r => setMonthly2024(r.data?.data ?? []))
+    statisticApi.getRevenueByMonth({ year: 2026 })
+      .then(r => setMonthly2026(r.data?.data ?? []))
       .catch(() => {});
   }, []);
 
   const data = useMemo(() => {
-    const src = period === '2025' ? (revenueByMonth ?? []) : monthly2024;
+    const src = period === '2025' ? (revenueByMonth ?? []) : monthly2026;
     return MONTH_LABELS.map((label, idx) => {
       const found = src.find(r => r.month === idx + 1);
       return {
@@ -59,20 +59,20 @@ function RevenueTab({ period }) {
         donHang:  found ? found.totalOrders : 0,
       };
     });
-  }, [period, revenueByMonth, monthly2024]);
+  }, [period, revenueByMonth, monthly2026]);
 
   const compareData = useMemo(() => {
     const src25 = revenueByMonth ?? [];
     return MONTH_LABELS.map((label, idx) => {
       const r25 = src25.find(r => r.month === idx + 1);
-      const r24 = monthly2024.find(r => r.month === idx + 1);
+      const r26 = monthly2026.find(r => r.month === idx + 1);
       return {
         thang:      label,
         'Năm 2025': r25 ? +(r25.totalRevenue / 1_000_000).toFixed(2) : 0,
-        'Năm 2024': r24 ? +(r24.totalRevenue / 1_000_000).toFixed(2) : 0,
+        'Năm 2026': r26 ? +(r26.totalRevenue / 1_000_000).toFixed(2) : 0,
       };
     });
-  }, [revenueByMonth, monthly2024]);
+  }, [revenueByMonth, monthly2026]);
 
   const totalDT = data.reduce((s, d) => s + d.doanhThu, 0);
   const totalDH = data.reduce((s, d) => s + d.donHang, 0);
@@ -114,9 +114,9 @@ function RevenueTab({ period }) {
           </div>
         </Card>
 
-        {/* Bar comparison 2024 vs 2025 */}
+        {/* Bar comparison 2026 vs 2025 */}
         <Card className="p-6">
-          <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">So sánh năm 2024 – 2025</h4>
+          <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">So sánh năm 2026 – 2025</h4>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Doanh thu theo tháng · triệu đồng</p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -126,7 +126,7 @@ function RevenueTab({ period }) {
                 <YAxis tickFormatter={v => `${v}M`} {...axisProps} />
                 <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v, n) => [`${v} triệu đ`, n]} />
                 <Legend />
-                <Bar dataKey="Năm 2024" fill="#94a3b8" radius={[3, 3, 0, 0]} maxBarSize={22} />
+                <Bar dataKey="Năm 2026" fill="#94a3b8" radius={[3, 3, 0, 0]} maxBarSize={22} />
                 <Bar dataKey="Năm 2025" fill="#fb923c" radius={[3, 3, 0, 0]} maxBarSize={22} />
               </BarChart>
             </ResponsiveContainer>
@@ -999,7 +999,7 @@ export default function Statistics() {
             className="text-sm border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-400"
           >
             <option value="2025">Năm 2025</option>
-            <option value="2024">Năm 2024</option>
+            <option value="2026">Năm 2026</option>
           </select>
           <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm font-medium transition-colors">
             <Download className="w-4 h-4" />

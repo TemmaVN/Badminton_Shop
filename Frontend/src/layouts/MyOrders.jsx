@@ -486,6 +486,28 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onReturn }) =>
   const [expandedIds, setExpandedIds] = useState([]);
   const [orderReviews, setOrderReviews] = useState({});
   const [reviewTarget, setReviewTarget] = useState(null);
+  const [returnInfo, setReturnInfo] = useState(null);
+
+  // Lấy thông tin yêu cầu trả hàng của đơn này (để khách theo dõi kết quả xử lý)
+  useEffect(() => {
+    if (!returnInProgress) { setReturnInfo(null); return; }
+    returnApi.getMyRequests(1, 100)
+      .then((res) => {
+        const list = res.data?.items ?? res.data?.data ?? [];
+        const mine = list
+          .filter((r) => r.orderId === order.orderId)
+          .sort((a, b) => new Date(b.requestedAt) - new Date(a.requestedAt));
+        setReturnInfo(mine[0] ?? null);
+      })
+      .catch(() => setReturnInfo(null));
+  }, [order.orderId, returnInProgress]);
+
+  const RETURN_STATUS_STYLE = {
+    "Chờ xử lý": "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30",
+    "Đã chấp thuận": "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30",
+    "Đã từ chối": "bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/30",
+    "Đã hoàn tiền": "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/30",
+  };
 
   const loadReviews = useCallback(() => {
     if (!canReview) return;
@@ -664,6 +686,53 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onReturn }) =>
               })}
             </div>
           </div>
+
+          {/* Return request tracking */}
+          {returnInProgress && returnInfo && (
+            <div className="rounded-xl border border-orange-200 dark:border-orange-500/30 bg-orange-50/60 dark:bg-orange-500/10 p-4 space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
+                  ↩ Yêu cầu trả hàng / hoàn tiền
+                </h3>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${RETURN_STATUS_STYLE[returnInfo.status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
+                  {returnInfo.statusText || returnInfo.status}
+                </span>
+              </div>
+              <div className="text-sm text-gray-700 dark:text-slate-300">
+                <p className="font-medium">{returnInfo.mainReasonName}</p>
+                <p className="text-gray-500 dark:text-slate-400">→ {returnInfo.detailReasonName}</p>
+                {returnInfo.customerDescription && (
+                  <p className="text-gray-500 dark:text-slate-400 italic mt-1">{returnInfo.customerDescription}</p>
+                )}
+              </div>
+              {returnInfo.images?.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {returnInfo.images.map((img) => (
+                    <a key={img.imageId} href={img.imageUrl} target="_blank" rel="noreferrer"
+                      className="w-14 h-14 rounded-lg overflow-hidden border border-orange-200 dark:border-orange-500/30">
+                      <img src={img.imageUrl} alt="" className="w-full h-full object-cover"
+                        onError={(e) => { e.target.style.display = "none"; }} />
+                    </a>
+                  ))}
+                </div>
+              )}
+              {returnInfo.adminNote && (
+                <div className="text-sm bg-white/70 dark:bg-slate-900/40 rounded-lg px-3 py-2 border border-orange-100 dark:border-orange-500/20">
+                  <span className="font-semibold text-gray-600 dark:text-slate-300">Phản hồi từ shop: </span>
+                  <span className="text-gray-700 dark:text-slate-300">{returnInfo.adminNote}</span>
+                </div>
+              )}
+              {returnInfo.refundAmount != null && (
+                <p className="text-sm text-gray-700 dark:text-slate-300">
+                  Số tiền hoàn: <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(returnInfo.refundAmount)}</span>
+                </p>
+              )}
+              <p className="text-xs text-gray-400 dark:text-slate-500">
+                Gửi lúc {formatDate(returnInfo.requestedAt)}
+                {returnInfo.reviewedAt && ` · Xử lý lúc ${formatDate(returnInfo.reviewedAt)}`}
+              </p>
+            </div>
+          )}
 
           {/* Payment summary */}
           <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-4 space-y-2">

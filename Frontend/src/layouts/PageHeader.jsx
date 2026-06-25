@@ -115,7 +115,7 @@ const PageHeader = () => {
         {!isShowFullWidthSearch && (
           <div>
             <Link to="/">
-              <img src='' alt="" className='w-12 h-12'/>
+              <img src='https://static.fbshop.vn/wp-content/uploads/2026/01/cropped-logo-4.webp' alt="" className='w-12 h-12'/>
             </Link>
           </div>
         )}
@@ -130,7 +130,7 @@ const PageHeader = () => {
         >
           <form
             onSubmit={(e) => { e.preventDefault(); handleSearch(); }}
-            className={`bg-gray-bg dark:bg-slate-800 rounded-[10px] w-full flex items-center ${isFocus ? 'border border-orange-default shadow-inner' : ''}`}
+            className={`bg-gray-bg dark:bg-slate-800 rounded-[10px] w-full flex items-center rounded-2xl  ${isFocus ? 'border border-orange-default shadow-inner' : ''}`}
           >
             <Button variant="ghost" size="icon" type="button">
               <Search />
@@ -148,9 +148,9 @@ const PageHeader = () => {
               onBlur={() => setIsFocus(false)}
               className='py-1 px-4 text-lg outline-none text-gray-text dark:text-slate-300 dark:placeholder:text-slate-500 flex-1 bg-transparent'
             />
-            <Button variant="find" size="find" type="submit">
+            <button className="bg-orange-default h-full py-1 px-4 rounded-r-[5px] hover:bg-orange-dark" type="submit">
               {!isShowFullWidthSearch ? "Tìm kiếm" : <Search />}
-            </Button>
+            </button>
           </form>
 
           {showDropdown && (
